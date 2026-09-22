@@ -1,20 +1,20 @@
 #include "Engine.h"
 
+#include "BoidSim/BoidScene.h"
+
 void Engine::Init()
 {
-	mSceneManager = SceneManager::GetInstance();
 	mAssetBank = AssetBank::GetInstance();
 	mCamera = Cam2D::GetInstance();
 
 	mAssetBank->Init();
-	mCamera->SetPosition({ (float)GetScreenWidth() / 2, (float)GetScreenHeight() / 2 });
+	mCamera->SetPosition({ 0.0f, 0.0f});
 
 	InitActors(); // for actors created before (if there is)
 
 	GlobalVariables::EngineRunning = true;
 
-	mSceneManager->ChangeScene(SceneDefault);
-
+	SceneManager::changeScene(new BoidScene());
 }
 
 void Engine::InitActors()
@@ -36,8 +36,7 @@ void Engine::InitActors()
 void Engine::DeInit()
 {
 	GameActor::Killa();
-
-	delete mSceneManager;
+	
 	delete mAssetBank;
 	delete mCamera;
 }
@@ -76,7 +75,7 @@ void Engine::Draw()
 
 	if (GlobalVariables::ShowFPS)
 	{
-		DrawFPS(100, 100);
+		DrawFPS(50, 50);
 	}
 }
 

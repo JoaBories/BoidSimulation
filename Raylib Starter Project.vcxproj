@@ -93,6 +93,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sources\AssetBank.cpp" />
+    <ClCompile Include="sources\BoidSim\BoidManager.cpp" />
+    <ClCompile Include="sources\BoidSim\BoidScene.cpp" />
     <ClCompile Include="sources\Cam2D.cpp" />
     <ClCompile Include="sources\Engine.cpp" />
     <ClCompile Include="sources\GameActor.cpp" />
@@ -101,12 +103,12 @@
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\Render2D.cpp" />
     <ClCompile Include="sources\SceneManager.cpp" />
-    <ClCompile Include="sources\TextActor.cpp" />
-    <ClCompile Include="sources\UiActor.cpp" />
     <ClCompile Include="sources\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sources\AssetBank.h" />
+    <ClInclude Include="sources\BoidSim\BoidManager.h" />
+    <ClInclude Include="sources\BoidSim\BoidScene.h" />
     <ClInclude Include="sources\Cam2D.h" />
     <ClInclude Include="sources\Engine.h" />
     <ClInclude Include="sources\GameActor.h" />
@@ -114,8 +116,6 @@
     <ClInclude Include="sources\ImageActor.h" />
     <ClInclude Include="sources\Render2D.h" />
     <ClInclude Include="sources\SceneManager.h" />
-    <ClInclude Include="sources\TextActor.h" />
-    <ClInclude Include="sources\UiActor.h" />
     <ClInclude Include="sources\Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

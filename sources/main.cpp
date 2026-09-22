@@ -8,12 +8,12 @@ void Draw();
 
 Engine mEngine;
 
-int screenHeight = 600; // Window Size
-int screenWidth = 700;  //
+int screenHeight = 800; // Window Size
+int screenWidth = 800;  //
 
-Color backgroundColor = BLACK;
+Color backgroundColor = RAYWHITE;
 
-const char* gameName = "Starter Engine"; //Name of the window
+const char* gameName = "BoidSim"; //Name of the window
 
 int main() {
 
@@ -31,10 +31,10 @@ int main() {
 
 void Init()
 {
-    srand((unsigned int) time(0));
+    srand(static_cast<unsigned int>(time(0)));
 
     InitWindow(screenWidth, screenHeight, gameName);
-    SetTargetFPS(60);
+    SetTargetFPS(0);
 
     mEngine.Init();
 }

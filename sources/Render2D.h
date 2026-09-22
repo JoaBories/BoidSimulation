@@ -14,20 +14,20 @@ private:
 
 	Rect2 mTextureSpace; // offset center, texture size, offset rotation
 
-	Rect2 toScreenSpace(Rect2 actorSpaceRect) const;
-	bool isVisible(Rect2 screenSpaceRect) const;
+	Rect2 toScreenSpace(const Rect2& actorSpaceRect) const;
+	bool isVisible(const Rect2& screenSpaceRect) const;
 
 public:
 
 	Render2D() = default;
 	~Render2D() = default;
 
-	Render2D(Rect2 textureSpace);
+	Render2D(const Rect2& textureSpace);
 
-	void Init(std::string textureName);
+	void Init(const std::string& textureName);
 
-	void ChangeTexture(std::string textureName);
-	void ChangeTextureSpace(Rect2 textureSpace);
+	void ChangeTexture(const std::string& textureName);
+	void ChangeTextureSpace(const Rect2& textureSpace);
 
 	Rect2 GetTextureSpace() const;
 

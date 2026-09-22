@@ -12,7 +12,7 @@ void AssetBank::Init()
 	FetchAll();
 }
 
-void AssetBank::SearchAFolder(path folderPath)
+void AssetBank::SearchAFolder(const path& folderPath)
 {
 	for (auto& entry : std::filesystem::directory_iterator(folderPath))
 	{
@@ -41,7 +41,7 @@ void AssetBank::SearchAFolder(path folderPath)
 	}
 }
 
-void AssetBank::SearchAFolderFor(path folderPath, AssetType forWhat)
+void AssetBank::SearchAFolderFor(const path& folderPath, AssetType forWhat)
 {
 	for (const auto& entry : std::filesystem::directory_iterator(folderPath))
 	{
@@ -263,7 +263,7 @@ bool AssetBank::FetchAFont(std::filesystem::path fontPath)
 	}
 }
 
-bool AssetBank::LoadAFont(std::string fontName)
+bool AssetBank::LoadAFont(const std::string& fontName)
 {
 	if (!mUnloadedFonts.count(fontName)) return false;
 
@@ -340,7 +340,7 @@ bool AssetBank::FetchASound(std::filesystem::path soundPath)
 	}
 }
 
-bool AssetBank::LoadASound(std::string soundName)
+bool AssetBank::LoadASound(const std::string& soundName)
 {
 	if (!mUnloadedTextures.count(soundName)) return false;
 

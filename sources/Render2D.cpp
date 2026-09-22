@@ -1,6 +1,6 @@
 #include "Render2D.h"
 
-Rect2 Render2D::toScreenSpace(Rect2 actorSpaceRect) const
+Rect2 Render2D::toScreenSpace(const Rect2& actorSpaceRect) const
 {
 	Rect2 textureToScreen = Rect2();
 
@@ -13,7 +13,7 @@ Rect2 Render2D::toScreenSpace(Rect2 actorSpaceRect) const
 	return textureToScreen;
 }
 
-bool Render2D::isVisible(Rect2 screenSpaceRect) const
+bool Render2D::isVisible(const Rect2& screenSpaceRect) const
 {
 	if (!GlobalVariables::TextureCulling)
 	{
@@ -35,23 +35,23 @@ bool Render2D::isVisible(Rect2 screenSpaceRect) const
 	return false;
 }
 
-Render2D::Render2D(Rect2 textureSpace):
+Render2D::Render2D(const Rect2& textureSpace):
 	mTexture{ nullptr },
 	mTextureSpace{ textureSpace }
 {
 }
 
-void Render2D::Init(std::string textureName)
+void Render2D::Init(const std::string& textureName)
 {
 	mTexture = AssetBank::GetInstance()->GetATexture(textureName);
 }
 
-void Render2D::ChangeTexture(std::string textureName)
+void Render2D::ChangeTexture(const std::string& textureName)
 {
 	mTexture = AssetBank::GetInstance()->GetATexture(textureName);
 }
 
-void Render2D::ChangeTextureSpace(Rect2 textureSpace)
+void Render2D::ChangeTextureSpace(const Rect2& textureSpace)
 {
 	mTextureSpace = textureSpace;
 }

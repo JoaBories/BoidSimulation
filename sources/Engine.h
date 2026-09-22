@@ -5,8 +5,6 @@
 class Engine
 {
 private :
-
-	SceneManager* mSceneManager;
 	AssetBank* mAssetBank;
 	Cam2D* mCamera;
 

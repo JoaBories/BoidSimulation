@@ -1,41 +1,20 @@
 #include "SceneManager.h"
 
-SceneManager* SceneManager::instance = nullptr;
+Scene* SceneManager::mCurrentScene = nullptr;
 
-SceneManager* SceneManager::GetInstance()
-{
-	if (!instance)
-	{
-		instance = new SceneManager();
-	}
-
-	return instance;
-}
-
-void SceneManager::ChangeScene(Scenes newScene)
+void SceneManager::changeScene(Scene* newScene)
 {
 	GameActor::Killa();
-
 	mCurrentScene = newScene;
-
-	switch (newScene)
-	{
-	case SceneDefault:
-		break;
-
-	default:
-		break;
-	}
+	mCurrentScene->init();
 }
 
-void SceneManager::Update()
+void SceneManager::update()
 {
-	switch (mCurrentScene)
-	{
-	case SceneDefault:
-		break;
+	if (mCurrentScene) mCurrentScene->update();
+}
 
-	default:
-		break;
-	}
+void SceneManager::draw()
+{
+	if (mCurrentScene) mCurrentScene->draw();
 }

@@ -39,27 +39,27 @@ public:
 	static void Killa();
 
 	static std::vector<GameActor*> GetActorsByTag(Tag tag);
-	inline static std::map<short, std::vector<GameActor*>> GetActorsLogic()		{ return mActorLogicList; };
-	inline static std::map<short, std::vector<GameActor*>> GetActorsRender()	{ return mActorRenderList; };
+	static std::map<short, std::vector<GameActor*>> GetActorsLogic()		{ return mActorLogicList; }
+	static std::map<short, std::vector<GameActor*>> GetActorsRender()	{ return mActorRenderList; }
 
 	//Public for object only
 	GameActor();
-	inline ~GameActor() {};
+	virtual ~GameActor() {}
 
-	GameActor(short logicPriority, short renderPriority, Transform2D transform, Tag tag);
+	GameActor(short logicPriority, short renderPriority, const Transform2D& transform, Tag tag);
 
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 
-	inline Transform2D GetTransform() const										{ return mTransform; };
-	inline void SetTransform(Transform2D transform)								{ mTransform = transform; };
+	Transform2D GetTransform() const										{ return mTransform; }
+	void SetTransform(const Transform2D& transform)								{ mTransform = transform; }
 
-	inline Tag GetTag() const													{ return mTag; };
+	Tag GetTag() const													{ return mTag; }
 
-	inline bool IsActive() const												{ return mActive; };
-	inline void SetActive(bool active)											{ mActive = active; };
+	bool IsActive() const												{ return mActive; }
+	void SetActive(bool active)											{ mActive = active; }
 
-	inline bool ShouldBeDestroyed() const										{ return mPendingDestroy; };
-	inline void Destroy()														{ mPendingDestroy = true; };
+	bool ShouldBeDestroyed() const										{ return mPendingDestroy; }
+	void Destroy()														{ mPendingDestroy = true; }
 };

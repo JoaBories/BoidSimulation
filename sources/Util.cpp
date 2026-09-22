@@ -55,6 +55,13 @@ float MathUtils::RandFloat(float min, float max)
 	return min + random * (max - min);
 }
 
+Vect2F MathUtils::trigToCoord(const float angle, const float radius)
+{
+	float x = radius * cos(angle);
+	float y = radius * sin(angle);
+	return { x,y };
+}
+
 #pragma endregion
 
 #pragma region Structs

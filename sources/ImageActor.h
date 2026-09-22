@@ -5,7 +5,6 @@
 class ImageActor : public GameActor
 {
 private:
-
 	Render2D mRender;
 
 public:
@@ -13,7 +12,7 @@ public:
 	ImageActor() = default;
 	~ImageActor() = default;
 
-	ImageActor(Vect2F position, Vect2F size, std::string texture);
+	ImageActor(Vect2F position, Vect2F size, const std::string& texture);
 
 	// Inherited via GameActor
 	void Init() override;

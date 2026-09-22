@@ -135,7 +135,7 @@ GameActor::GameActor() :
 	AddActorToTagMap(mTag, this);
 }
 
-GameActor::GameActor(short logicPriority, short renderPriority, Transform2D transform, Tag tag):
+GameActor::GameActor(short logicPriority, short renderPriority, const Transform2D& transform, Tag tag):
 	mLogicPriority{ logicPriority },
 	mRenderPriority{ renderPriority },
 	mPendingDestroy{ false },

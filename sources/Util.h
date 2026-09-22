@@ -174,12 +174,6 @@ namespace Struct {
 		float rotation;
 	};
 
-	//Transform with : position in percentage / anchor / scale / rotation for ui objects
-	struct UiTransform
-	{
-		Vect2F mPosition;
-	};
-
 	//Oriented Rectangle struct with Collision | origin is the center
 	struct Rect2
 	{
@@ -248,6 +242,8 @@ namespace MathUtils {
 	int RandInt(int min, int max);
 
 	float RandFloat(float min, float max);
+	
+	Vect2F trigToCoord(float angle, float radius);
 	
 	inline Vect2F RandVect2Normalized()							{ return Vect2F{RandFloat(-1.0, 1.0f), RandFloat(-1.0f, 1.0f)}.normalized(); };
 };
