@@ -7,13 +7,13 @@ using Struct::Collision;
 
 #pragma region MathUtils
 
-Vect2F MathUtils::Vect2FromRot(float rot)
+Vect2F Math::Vect2FromRot(float rot)
 {
 	Vect2F vector = { cosf(rot * DEG2RAD), sinf(rot * DEG2RAD) };
 	return vector.normalized();
 }
 
-float MathUtils::OverlapOnAxis(const std::vector<Vect2F>& a, const std::vector<Vect2F>& b, Vect2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
+float Math::OverlapOnAxis(const std::vector<Vect2F>& a, const std::vector<Vect2F>& b, Vect2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
 {
 	float aMin = FLT_MAX, aMax = -FLT_MAX;
 	float bMin = FLT_MAX, bMax = -FLT_MAX;
@@ -35,27 +35,27 @@ float MathUtils::OverlapOnAxis(const std::vector<Vect2F>& a, const std::vector<V
 	return Min(aMax, bMax) - Max(aMin, bMin);
 }
 
-bool MathUtils::NearlyEqual(const float a, const float b)
+bool Math::NearlyEqual(const float a, const float b)
 {
 	float epsilon = 0.000001f;
 	return Abs( a - b ) < epsilon;
 }
 
-int MathUtils::RandInt(int min, int max)
+int Math::RandInt(int min, int max)
 {
 	int random = min + rand() % (min + max);
 
 	return random;
 }
 
-float MathUtils::RandFloat(float min, float max)
+float Math::RandFloat(float min, float max)
 {
 	float random = (float)rand() / (float)RAND_MAX;
 
 	return min + random * (max - min);
 }
 
-Vect2F MathUtils::trigToCoord(const float angle, const float radius)
+Vect2F Math::trigToCoord(const float angle, const float radius)
 {
 	float x = radius * cos(angle);
 	float y = radius * sin(angle);
@@ -79,7 +79,7 @@ const Vect2F Vect2F::left = { -1,0 };
 
 bool Vect2F::operator==(const Vect2F& rm) const
 { 
-	return (MathUtils::NearlyEqual(x, rm.x) && MathUtils::NearlyEqual(y, rm.y)); 
+	return (Math::NearlyEqual(x, rm.x) && Math::NearlyEqual(y, rm.y)); 
 }
 
 float Vect2F::getRot() const
@@ -94,7 +94,7 @@ float Vect2F::getRot() const
 
 Vect2F Vect2F::absolute() const
 {
-	return { MathUtils::Abs(x), MathUtils::Abs(y) };
+	return { Math::Abs(x), Math::Abs(y) };
 }
 
 Vect2F Vect2F::normalized() const
@@ -148,7 +148,7 @@ float Vect2I::getRot() const
 
 Vect2I Vect2I::absolute() const
 {
-	return { MathUtils::Abs(x), MathUtils::Abs(y) };
+	return { Math::Abs(x), Math::Abs(y) };
 }
 
 #pragma endregion
@@ -187,8 +187,8 @@ Collision Rect2::CheckAABB(const Rect2& other) const
 		result.collided = true;
 
 		Vect2F overlap = Vect2F();
-		overlap.x = MathUtils::Min(aMax.x, bMax.x) - MathUtils::Max(aMin.x, bMin.x);
-		overlap.y = MathUtils::Min(aMax.y, bMax.y) - MathUtils::Max(aMin.y, bMin.y);
+		overlap.x = Math::Min(aMax.x, bMax.x) - Math::Max(aMin.x, bMin.x);
+		overlap.y = Math::Min(aMax.y, bMax.y) - Math::Max(aMin.y, bMin.y);
 
 		if (overlap.x < overlap.y) // Getting minimal overlap and his axis
 		{
@@ -253,7 +253,7 @@ Collision Rect2::CheckOBB(const Rect2& other) const
 
 		for (const auto& axis : axes)									// Testing overlap on all axes. If there is overlap on all of them then there is collision
 		{
-			float overlap = MathUtils::OverlapOnAxis(aCorners, bCorners, axis);
+			float overlap = Math::OverlapOnAxis(aCorners, bCorners, axis);
 			
 			if (overlap < 0)
 			{

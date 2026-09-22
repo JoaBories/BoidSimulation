@@ -1,9 +1,15 @@
 #include "BoidManager.h"
 
-BoidManager::BoidManager(uint32_t agentNumber) :
+BoidManager::BoidManager(const uint32_t agentNumber) :
     mBoidNumber(agentNumber)
 {
     init();
+}
+
+BoidManager::~BoidManager()
+{
+    mBoidPositions.clear();
+    mBoidVelocities.clear();
 }
 
 void BoidManager::init()
@@ -16,7 +22,7 @@ void BoidManager::init()
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         mBoidPositions.emplace_back(screenCenter);
-        mBoidVelocities.emplace_back(MathUtils::RandVect2Normalized() * 50.0f);
+        mBoidVelocities.emplace_back(Math::randVec2() * 50.0f);
     }
 }
 
@@ -52,13 +58,10 @@ void BoidManager::update()
     }
 }
 
-void BoidManager::draw()
+void BoidManager::draw() const
 {
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        const float rotation = mBoidVelocities[i].getRot();
-        const Vect2F position = mBoidPositions[i];
-        
         DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);
     }
 }

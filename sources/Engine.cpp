@@ -8,7 +8,7 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(100);
+	mBoidManager = new BoidManager(10000);
 }
 
 void Engine::close()
@@ -17,6 +17,9 @@ void Engine::close()
 	
 	delete mAssetBank;
 	mAssetBank = nullptr;
+	
+	delete mBoidManager;
+	mBoidManager = nullptr;
 }
 
 void Engine::update() const

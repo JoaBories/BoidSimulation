@@ -208,7 +208,7 @@ namespace Struct {
 	inline std::istream& operator>>(std::istream& is, Vect2I& v) { is >> v.x >> v.y; return is; }
 }
 
-namespace MathUtils {
+namespace Math {
 
 	template <typename T>
 	inline T Min(T a, T b)										{ return (a <= b) ? a : b; };
@@ -245,5 +245,5 @@ namespace MathUtils {
 	
 	Vect2F trigToCoord(float angle, float radius);
 	
-	inline Vect2F RandVect2Normalized()							{ return Vect2F{RandFloat(-1.0, 1.0f), RandFloat(-1.0f, 1.0f)}.normalized(); };
+	inline Vect2F randVec2()							{ return Vect2F{RandFloat(-1.0, 1.0f), RandFloat(-1.0f, 1.0f)}.normalized(); };
 };

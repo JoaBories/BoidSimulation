@@ -4,15 +4,17 @@
 class BoidManager
 {
 private:
-    uint32_t mBoidNumber;
     std::vector<Vect2F> mBoidPositions;
     std::vector<Vect2F> mBoidVelocities;
+    uint32_t mBoidNumber;
     
 public:
     BoidManager() = delete;
-    BoidManager(uint32_t agentNumber);
+    explicit BoidManager(uint32_t agentNumber);
+    
+    ~BoidManager();
     
     void init();
     void update();
-    void draw();
+    void draw() const;
 };
