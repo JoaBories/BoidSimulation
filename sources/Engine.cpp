@@ -8,7 +8,7 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(10);
+	mBoidManager = new BoidManager(1000);
 }
 
 void Engine::close()
@@ -51,8 +51,6 @@ void Engine::draw() const
 			if (actor->IsActive()) actor->Draw();
 		}
 	}
-
-	DrawFPS(50, 50);
 	
 	EndDrawing();
 }

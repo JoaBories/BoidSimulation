@@ -16,7 +16,7 @@ private:
     std::vector<BoidWeights> mBoidWeights;
     uint32_t mBoidNumber;
     
-    float mLastUpdateTime;
+    int mLastUpdateTime;
     
     BoidWeights mDefaultWeights = {5.0f, 0.5f, 2.0f};
     float mSeparateRange = 20.0f;

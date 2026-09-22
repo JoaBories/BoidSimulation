@@ -151,10 +151,15 @@ void BoidManager::init()
 
 void BoidManager::update()
 {
+    const auto start = std::chrono::high_resolution_clock::now();
+    
     checkScreenBounds();
     resolveVelocity();
     
     applyRules();
+    
+    const auto end = std::chrono::high_resolution_clock::now();
+    mLastUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 }
 
 void BoidManager::draw() const
@@ -166,4 +171,9 @@ void BoidManager::draw() const
     
     //draw debug
     drawDebug(0);
+    
+    std::string updateTime = "update time : " + std::to_string(mLastUpdateTime / 1000) + " ms";
+    std::string boidTime = "boid time : " + std::to_string(static_cast<float>(mLastUpdateTime) / static_cast<float>(mBoidNumber)) + " us";
+    DrawText(updateTime.c_str(), 50, 50, 20, DARKGREEN);
+    DrawText(boidTime.c_str(), 50, 70, 20, DARKGREEN);
 }
