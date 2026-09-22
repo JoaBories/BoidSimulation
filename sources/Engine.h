@@ -1,26 +1,26 @@
 #pragma once
 
-#include "SceneManager.h"
+#include "BoidSim/BoidManager.h"
 
 class Engine
 {
 private :
 	AssetBank* mAssetBank;
-	Cam2D* mCamera;
+	BoidManager* mBoidManager;
 
 public :
 	Engine() = default;
 	~Engine() = default;
+	
+	Engine(const Engine& other) = delete;
+	Engine(Engine&& other) noexcept = delete;
+	Engine& operator=(const Engine& other) = delete;
+	Engine& operator=(Engine&& other) noexcept = delete;
 
-	void Init();
-	void InitActors();
+	void init();
+	void close();
 
-	void DeInit();
-
-	void Update();
-	void UpdateActors();
-
-	void Draw();
-	void DrawActors();
+	void update() const;
+	void draw() const;
 };
 

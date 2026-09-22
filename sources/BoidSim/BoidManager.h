@@ -1,7 +1,7 @@
 #pragma once
 #include "GameActor.h"
 
-class BoidManager : public GameActor
+class BoidManager
 {
 private:
     uint32_t mBoidNumber;
@@ -12,7 +12,7 @@ public:
     BoidManager() = delete;
     BoidManager(uint32_t agentNumber);
     
-    void Init() override;
-    void Update() override;
-    void Draw() override;
+    void init();
+    void update();
+    void draw();
 };

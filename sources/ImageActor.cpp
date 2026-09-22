@@ -1,14 +1,11 @@
 #include "ImageActor.h"
 
-ImageActor::ImageActor(Vect2F position, Vect2F size, const std::string& texture) :
+ImageActor::ImageActor(const Vect2F position, const Vect2F size, const std::string& texture) :
 	GameActor{2,0, {position, Vect2F::one, 0}, TagDefault},
-	mRender{{Vect2F::zero, size}}
+	mRender{Rect2{Vect2F::zero, size, 0.0f}}
 {
-	if (GlobalVariables::EngineRunning)
-	{
-		Init();
-		mRender.Init(texture);
-	}
+	ImageActor::Init();
+	mRender.Init(texture);
 }
 
 void ImageActor::Init()

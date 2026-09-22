@@ -2,7 +2,6 @@
 
 #include "GlobalVariables.h"
 #include "AssetBank.h"
-
 using Struct::Transform2D;
 
 enum Tag
@@ -12,15 +11,9 @@ enum Tag
 
 class GameActor
 {
-
 private:
-	void AddActorToLogicList(short logicPriority, GameActor* actor);
-	void AddActorToRenderList(short renderPriority, GameActor* actor);
-	void AddActorToTagMap(Tag tag, GameActor* actor);
-
-	static std::map<short, std::vector<GameActor*>> mActorLogicList;
-	static std::map<short, std::vector<GameActor*>> mActorRenderList;
-	static std::unordered_map<Tag, std::vector<GameActor*>> mActorTagMap;
+	static void AddActor(GameActor* actor) { mActors.emplace_back(actor); }
+	static std::vector<GameActor*> mActors;
 
 protected:
 	short mLogicPriority;
@@ -35,12 +28,13 @@ protected:
 
 public:
 	//Static for all GameActors
-	static void KillPendingsActors();
-	static void Killa();
+	static void killPendingsActors();
+	static void killa();
 
+	//Used for iterating trough actors
+	static const std::vector<GameActor*>& actors() { return mActors; }
+	
 	static std::vector<GameActor*> GetActorsByTag(Tag tag);
-	static std::map<short, std::vector<GameActor*>> GetActorsLogic()		{ return mActorLogicList; }
-	static std::map<short, std::vector<GameActor*>> GetActorsRender()	{ return mActorRenderList; }
 
 	//Public for object only
 	GameActor();
@@ -52,8 +46,8 @@ public:
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 
-	Transform2D GetTransform() const										{ return mTransform; }
-	void SetTransform(const Transform2D& transform)								{ mTransform = transform; }
+	Transform2D GetTransform() const									{ return mTransform; }
+	void SetTransform(const Transform2D& transform)						{ mTransform = transform; }
 
 	Tag GetTag() const													{ return mTag; }
 

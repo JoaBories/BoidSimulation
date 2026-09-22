@@ -1,99 +1,55 @@
 #include "Engine.h"
 
-#include "BoidSim/BoidScene.h"
-
-void Engine::Init()
+void Engine::init()
 {
+	InitWindow(800, 800, "Boid Simulation");
+	SetTargetFPS(60);
+	
 	mAssetBank = AssetBank::GetInstance();
-	mCamera = Cam2D::GetInstance();
-
 	mAssetBank->Init();
-	mCamera->SetPosition({ 0.0f, 0.0f});
-
-	InitActors(); // for actors created before (if there is)
-
-	GlobalVariables::EngineRunning = true;
-
-	SceneManager::changeScene(new BoidScene());
+	
+	mBoidManager = new BoidManager(100);
 }
 
-void Engine::InitActors()
+void Engine::close()
 {
-	if (GameActor::GetActorsLogic().empty())
-	{
-		return;
-	}
-
-	for (auto& actorList : GameActor::GetActorsLogic())
-	{
-		for (auto& actor : actorList.second)
-		{
-			actor->Init();
-		}
-	}
-}
-
-void Engine::DeInit()
-{
-	GameActor::Killa();
+	GameActor::killa();
 	
 	delete mAssetBank;
-	delete mCamera;
+	mAssetBank = nullptr;
 }
 
-void Engine::Update()
+void Engine::update() const
 {
-	mCamera->Update();
-
-	UpdateActors();
-
-	GameActor::KillPendingsActors();
-}
-
-void Engine::UpdateActors()
-{
-	if (GameActor::GetActorsLogic().empty())
+	mBoidManager->update();
+	
+	if (!GameActor::actors().empty())
 	{
-		return;
-	}
-
-	for (auto& actorList : GameActor::GetActorsLogic())
-	{
-		for (auto& actor : actorList.second)
+		for (GameActor* actor : GameActor::actors())
 		{
-			if (actor->IsActive())
-			{
-				actor->Update();
-			}
+			if (actor->IsActive()) actor->Update();
 		}
 	}
+
+	GameActor::killPendingsActors();
 }
 
-void Engine::Draw()
+void Engine::draw() const
 {
-	DrawActors();
-
-	if (GlobalVariables::ShowFPS)
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+	
+	mBoidManager->draw();
+	
+	if (!GameActor::actors().empty())
 	{
-		DrawFPS(50, 50);
-	}
-}
-
-void Engine::DrawActors()
-{
-	if (GameActor::GetActorsRender().empty())
-	{
-		return;
-	}
-
-	for (auto& actorList : GameActor::GetActorsRender())
-	{
-		for (auto& actor : actorList.second)
+		for (GameActor* actor : GameActor::actors())
 		{
-			if (actor->IsActive())
-			{
-				actor->Draw();
-			}
+			if (actor->IsActive()) actor->Draw();
 		}
 	}
+
+	DrawFPS(50, 50);
+	
+	EndDrawing();
 }

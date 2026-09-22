@@ -3,13 +3,10 @@
 BoidManager::BoidManager(uint32_t agentNumber) :
     mBoidNumber(agentNumber)
 {
-    if (GlobalVariables::EngineRunning)
-    {
-        BoidManager::Init();
-    }
+    init();
 }
 
-void BoidManager::Init()
+void BoidManager::init()
 {
     mBoidPositions.reserve(mBoidNumber);
     mBoidVelocities.reserve(mBoidNumber);
@@ -23,9 +20,9 @@ void BoidManager::Init()
     }
 }
 
-void BoidManager::Update()
+void BoidManager::update()
 {
-    Vect2F screenBounds = Vect2F(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
+    const Vect2F screenBounds(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
@@ -55,7 +52,7 @@ void BoidManager::Update()
     }
 }
 
-void BoidManager::Draw()
+void BoidManager::draw()
 {
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {

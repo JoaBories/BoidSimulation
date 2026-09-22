@@ -1,150 +1,66 @@
 #include "GameActor.h"
 
-std::map<short, std::vector<GameActor*>> GameActor::mActorLogicList;
-std::map<short, std::vector<GameActor*>> GameActor::mActorRenderList;
-std::unordered_map<Tag, std::vector<GameActor*>> GameActor::mActorTagMap;
+std::vector<GameActor*> GameActor::mActors;
 
-void GameActor::AddActorToLogicList(short logicPriority, GameActor* actor)
+void GameActor::killPendingsActors()
 {
-	if (!mActorLogicList.count(logicPriority))
-	{
-		mActorLogicList[logicPriority] = std::vector<GameActor*>{ actor };
-	}
-	else
-	{
-		mActorLogicList.at(logicPriority).push_back(actor);
-	}
-}
-
-void GameActor::AddActorToRenderList(short renderPriority, GameActor* actor)
-{
-	if (!mActorRenderList.count(renderPriority)) 
-	{
-		mActorRenderList[renderPriority] = std::vector<GameActor*>{ actor };
-	}
-	else
-	{
-		mActorRenderList.at(renderPriority).push_back(actor);
-	}
-}
-
-void GameActor::AddActorToTagMap(Tag tag, GameActor* actor)
-{
-	if (!mActorTagMap.count(tag))
-	{
-		mActorTagMap[tag] = std::vector<GameActor*>{ actor };
-	}
-	else
-	{
-		mActorTagMap.at(tag).push_back(actor);
-	}
-}
-
-void GameActor::KillPendingsActors()
-{
-	if (mActorLogicList.empty())
+	if (mActors.empty())
 	{
 		return;
 	}
 
-	for (auto& actorList : mActorLogicList)
+	for (size_t i = 0; i < mActors.size(); ++i)
 	{
-		for (size_t i = 0; i < actorList.second.size(); i++)
+		if (mActors[i]->ShouldBeDestroyed())
 		{
-			if (actorList.second[i]->ShouldBeDestroyed())
-			{
-				delete actorList.second[i];
-
-				actorList.second.erase(actorList.second.begin() + i);
-			};
+			delete mActors[i];
+			mActors.erase(mActors.begin() + i);
 		}
-
-		if (actorList.second.empty()) mActorLogicList.erase(actorList.first);
-	}
-
-	for (auto& actorList : mActorRenderList)
-	{
-		for (size_t i = 0; i < actorList.second.size(); i++)
-		{
-			if (actorList.second[i]->ShouldBeDestroyed())
-			{
-				delete actorList.second[i];
-
-				actorList.second.erase(actorList.second.begin() + i);
-			};
-		}
-
-		if (actorList.second.empty()) mActorRenderList.erase(actorList.first);
-	}
-
-	for (auto& actorList : mActorTagMap)
-	{
-		for (size_t i = 0; i < actorList.second.size(); i++)
-		{
-			if (actorList.second[i]->ShouldBeDestroyed())
-			{
-				delete actorList.second[i];
-
-				actorList.second.erase(actorList.second.begin() + i);
-			};
-		}
-
-		if (actorList.second.empty()) mActorTagMap.erase(actorList.first);
 	}
 }
 
-void GameActor::Killa()
+void GameActor::killa()
 {
-	if (!mActorLogicList.empty())
+	if (!mActors.empty())
 	{
-		for (auto& actorList : mActorLogicList)
+		for (const auto* actor : mActors)
 		{
-			for (auto* actor : actorList.second)
-			{
-				delete actor;
-			}
+			delete actor;
 		}
-
 	}
-
-	mActorLogicList.clear();
-	mActorRenderList.clear();
-	mActorTagMap.clear();
+	
+	mActors.clear();
 }
 
 std::vector<GameActor*> GameActor::GetActorsByTag(Tag tag)
 {
-	if (mActorTagMap.find(tag) == mActorTagMap.end())
+	std::vector<GameActor*> actors;
+	
+	for (auto* actor : mActors)
 	{
-		return std::vector<GameActor*>{};
+		if (actor->GetTag() == tag) actors.emplace_back(actor);
 	}
-
-	return mActorTagMap[tag];
+	
+	return actors;
 }
 
 GameActor::GameActor() :
 	mLogicPriority{ 0 },
 	mRenderPriority{ 0 },
-	mPendingDestroy{ false },
-	mTransform{},
 	mTag{ TagDefault },
-	mActive{ true }
+	mTransform{},
+	mPendingDestroy{ false }
 {
-	AddActorToLogicList(mLogicPriority, this);
-	AddActorToRenderList(mRenderPriority, this);
-	AddActorToTagMap(mTag, this);
+	AddActor(this);
 }
 
-GameActor::GameActor(short logicPriority, short renderPriority, const Transform2D& transform, Tag tag):
+GameActor::GameActor(const short logicPriority, const short renderPriority, const Transform2D& transform, const Tag tag) :
 	mLogicPriority{ logicPriority },
 	mRenderPriority{ renderPriority },
-	mPendingDestroy{ false },
-	mTransform{ transform },
 	mTag{ tag },
-	mActive{ true }
+	mTransform{ transform },
+	mPendingDestroy{ false }
 {
-	AddActorToLogicList(logicPriority, this);
-	AddActorToRenderList(renderPriority, this);
-	AddActorToTagMap(mTag, this);
+	AddActor(this);
 }
 
