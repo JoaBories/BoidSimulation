@@ -8,7 +8,7 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(10000);
+	mBoidManager = new BoidManager(10);
 }
 
 void Engine::close()
