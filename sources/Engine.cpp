@@ -2,13 +2,13 @@
 
 void Engine::init()
 {
-	InitWindow(800, 800, "Boid Simulation");
+	InitWindow(1280, 720, "Boid Simulation");
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(1000);
+	mBoidManager = new BoidManager(5000);
 }
 
 void Engine::close()
@@ -51,6 +51,8 @@ void Engine::draw() const
 			if (actor->IsActive()) actor->Draw();
 		}
 	}
+
+	DrawFPS(10, 10);
 	
 	EndDrawing();
 }

@@ -20,9 +20,10 @@ private:
     BoidGrid mGrid;
     
     int mLastUpdateTime;
+    int mLastGridUpdateTime;
     
-    BoidWeights mDefaultWeights = {5.0f, 0.5f, 2.0f};
-    float mSeparateRange = 20.0f;
+    BoidWeights mDefaultWeights = {10.0f, 0.5f, 2.0f};
+    float mSeparateRange = 40.0f;
     float mAlignRange = 50.0f;
     float mGroupRange = 70.0f;
     float mPerceptionAngle = 180.0f;

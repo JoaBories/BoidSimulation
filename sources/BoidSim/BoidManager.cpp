@@ -17,24 +17,24 @@ void BoidManager::checkScreenBounds()
     {
         if (mBoidPositions[i].x < 0)
         {
-            mBoidPositions[i].x = 0;
-            mBoidVelocities[i].x = -mBoidVelocities[i].x;
+            mBoidPositions[i].x = screenBounds.x;
+            //mBoidVelocities[i].x = -mBoidVelocities[i].x;
         }
         else if (mBoidPositions[i].x > screenBounds.x)
         {
-            mBoidPositions[i].x = screenBounds.x;
-            mBoidVelocities[i].x = -mBoidVelocities[i].x;
+            mBoidPositions[i].x = 0;
+            //mBoidVelocities[i].x = -mBoidVelocities[i].x;
         }
         
         if (mBoidPositions[i].y < 0)
         {
-            mBoidPositions[i].y = 0;
-            mBoidVelocities[i].y = -mBoidVelocities[i].y;
+            mBoidPositions[i].y = screenBounds.y;
+            //mBoidVelocities[i].y = -mBoidVelocities[i].y;
         }
         else if (mBoidPositions[i].y > screenBounds.y)
         {
-            mBoidPositions[i].y = screenBounds.y;
-            mBoidVelocities[i].y = -mBoidVelocities[i].y;
+            mBoidPositions[i].y = 0;
+            //mBoidVelocities[i].y = -mBoidVelocities[i].y;
         }
     }
 }
@@ -43,6 +43,9 @@ void BoidManager::applyRules()
 {
     const float dotProductTreshold = -(mPerceptionAngle / 180.0f - 1.0f);
     const float higherRange = Math::Max(mSeparateRange, Math::Max(mAlignRange, mGroupRange));
+
+    int stepX = std::ceil(higherRange / mGrid.getGridSize().x);
+    int stepY = std::ceil(higherRange / mGrid.getGridSize().y);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
@@ -54,37 +57,51 @@ void BoidManager::applyRules()
         Vect2F groupSum { 0.0f, 0.0f };
         uint32_t groupCount = 0;
         
-        for (int j : mGrid.getNeighbors(mBoidPositions[i], higherRange))
-        {
-            if (i == j) continue;
-            
-            Vect2F distance = mBoidPositions[j] - mBoidPositions[i];
-            if (distance.dot(mBoidVelocities[i]) <= dotProductTreshold) // Skip neighbors not in view
-            {
-                continue;
-            }
+        Vect2I gridPos = mGrid.getGridPos(mBoidPositions[i]);
 
-            const float distanceSquared = distance.dot(distance);
-            if (distanceSquared >= higherRange * higherRange) // Skip neighbors not in range
+
+        for (int y = -stepY; y < stepY+1; y++)
+        {
+            if (gridPos.y + y < 0 || gridPos.y + y >= sizeY) continue;
+
+            for (int x = -stepX; x < stepX+1; x++)
             {
-                continue;
-            }
-            
-            if (distanceSquared <= mSeparateRange * mSeparateRange)
-            {
-                separate += -distance / distanceSquared;
-            }
-            
-            if (distanceSquared <= mAlignRange * mAlignRange)
-            {
-                alignSum += mBoidVelocities[j];
-                alignCount++;
-            }
-            
-            if (distanceSquared <= mGroupRange * mGroupRange)
-            {
-                groupSum += mBoidPositions[j];
-                groupCount++;
+                if (gridPos.x + x < 0 || gridPos.x + x >= sizeX) continue;
+
+
+                for (int j : mGrid.getNeighbors(gridPos + Vect2I(x,y)))
+                {
+                    if (i == j) continue;
+
+                    Vect2F distance = mBoidPositions[j] - mBoidPositions[i];
+                    if (distance.dot(mBoidVelocities[i]) <= dotProductTreshold) // Skip neighbors not in view
+                    {
+                        continue;
+                    }
+
+                    const float distanceSquared = distance.dot(distance);
+                    if (distanceSquared >= higherRange * higherRange) // Skip neighbors not in range
+                    {
+                        continue;
+                    }
+
+                    if (distanceSquared <= mSeparateRange * mSeparateRange)
+                    {
+                        separate += -distance / distanceSquared;
+                    }
+
+                    if (distanceSquared <= mAlignRange * mAlignRange)
+                    {
+                        alignSum += mBoidVelocities[j];
+                        alignCount++;
+                    }
+
+                    if (distanceSquared <= mGroupRange * mGroupRange)
+                    {
+                        groupSum += mBoidPositions[j];
+                        groupCount++;
+                    }
+                }
             }
         }
         
@@ -119,6 +136,30 @@ void BoidManager::drawDebug(const uint32_t boidIndex) const
     DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mGroupRange, perceptionEdgeR, perceptionEdgeL, 10, PINK);
     DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mAlignRange, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
     DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mSeparateRange, perceptionEdgeR, perceptionEdgeL, 10, RED);
+
+    const float higherRange = Math::Max(mSeparateRange, Math::Max(mAlignRange, mGroupRange));
+    int stepX = std::ceil(higherRange / mGrid.getGridSize().x);
+    int stepY = std::ceil(higherRange / mGrid.getGridSize().y);
+
+    Vect2I gridPos = mGrid.getGridPos(mBoidPositions[boidIndex]);
+
+    for (int y = -stepY; y < stepY + 1; y++)
+    {
+        if (gridPos.y + y < 0 || gridPos.y + y >= sizeY) continue;
+
+        for (int x = -stepX; x < stepX + 1; x++)
+        {
+            if (gridPos.x + x < 0 || gridPos.x + x >= sizeX) continue;
+
+
+            for (int j : mGrid.getNeighbors(gridPos + Vect2I(x, y)))
+            {
+                if (boidIndex == j) continue;
+
+                DrawCircleLines(mBoidPositions[j].x, mBoidPositions[j].y, 20.0f, BLACK);
+            }
+        }
+    }
 }
 
 BoidManager::BoidManager(const uint32_t agentNumber) :
@@ -158,35 +199,31 @@ void BoidManager::update()
     
 
     checkScreenBounds();
+
+    const auto updateStart = std::chrono::high_resolution_clock::now();
     mGrid.updateGrid(mBoidPositions);
+    const auto updateEnd = std::chrono::high_resolution_clock::now();
     
     const auto end = std::chrono::high_resolution_clock::now();
+
     mLastUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    mLastGridUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart).count();
 }
 
 void BoidManager::draw() const
 {
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        Vect2I gridPos = mGrid.getGridPos(mBoidPositions[i]);
-
-        Color color = DARKGRAY;
-        switch ((gridPos.x + gridPos.y) % 4)
-        {
-            case 0: color = RED; break;
-            case 1: color = GREEN; break;
-            case 2: color = BLUE; break;
-            case 3: color = ORANGE; break;
-        }
-
-        DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, color);
+        DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);
     }
     
     //draw debug
-    drawDebug(0);
+    //drawDebug(0);
     
     std::string updateTime = "update time : " + std::to_string(mLastUpdateTime / 1000) + " ms";
     std::string boidTime = "boid time : " + std::to_string(static_cast<float>(mLastUpdateTime) / static_cast<float>(mBoidNumber)) + " us";
-    DrawText(updateTime.c_str(), 10, 10, 20, DARKGREEN);
-    DrawText(boidTime.c_str(), 10, 30, 20, DARKGREEN);
+    std::string gridTime = "grid time : " + std::to_string(static_cast<float>(mLastGridUpdateTime)) + " us";
+    DrawText(updateTime.c_str(), 10, 30, 20, DARKGREEN);
+    DrawText(boidTime.c_str(), 10, 50, 20, DARKGREEN);
+    DrawText(gridTime.c_str(), 10, 70, 20, DARKGREEN);
 }

@@ -62,6 +62,12 @@ Vect2F Math::trigToCoord(const float angle, const float radius)
 	return { x,y };
 }
 
+bool Math::PointInCircle(const Vect2F& point, const Vect2F& circleCenter, float circleRadius)
+{
+	const Vect2F distance = point - circleCenter;
+	return distance.sqrLength() <= circleRadius * circleRadius;
+}
+
 #pragma endregion
 
 #pragma region Structs

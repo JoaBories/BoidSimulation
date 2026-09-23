@@ -244,6 +244,8 @@ namespace Math {
 	float RandFloat(float min, float max);
 	
 	Vect2F trigToCoord(float angle, float radius);
+
+	bool PointInCircle(const Vect2F& point, const Vect2F& circleCenter, float circleRadius);
 	
 	inline Vect2F randVec2()							{ return Vect2F{RandFloat(-1.0, 1.0f), RandFloat(-1.0f, 1.0f)}.normalized(); };
 };

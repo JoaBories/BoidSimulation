@@ -33,9 +33,9 @@ void BoidGrid::updateGrid(const std::vector<Vect2F>& boidPositions)
 	}
 }
 
-const std::vector<int>& BoidGrid::getNeighbors(const Vect2F& position, float maxRange)
+const std::vector<int>& BoidGrid::getNeighbors(const Vect2I& gridPosition) const
 {
-	return {};
+	return mGrid[gridPosition.y][gridPosition.x];
 }
 
 const Vect2I& BoidGrid::getGridPos(const Vect2F& position) const
