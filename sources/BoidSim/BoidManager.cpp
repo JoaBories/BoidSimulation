@@ -54,7 +54,7 @@ void BoidManager::applyRules()
         Vect2F groupSum { 0.0f, 0.0f };
         uint32_t groupCount = 0;
         
-        for (uint32_t j = 0; j < mBoidNumber; j++)
+        for (int j : mGrid.getNeighbors(mBoidPositions[i], higherRange))
         {
             if (i == j) continue;
             
@@ -153,10 +153,12 @@ void BoidManager::update()
 {
     const auto start = std::chrono::high_resolution_clock::now();
     
-    checkScreenBounds();
+    applyRules();
     resolveVelocity();
     
-    applyRules();
+
+    checkScreenBounds();
+    mGrid.updateGrid(mBoidPositions);
     
     const auto end = std::chrono::high_resolution_clock::now();
     mLastUpdateTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -166,7 +168,18 @@ void BoidManager::draw() const
 {
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);
+        Vect2I gridPos = mGrid.getGridPos(mBoidPositions[i]);
+
+        Color color = DARKGRAY;
+        switch ((gridPos.x + gridPos.y) % 4)
+        {
+            case 0: color = RED; break;
+            case 1: color = GREEN; break;
+            case 2: color = BLUE; break;
+            case 3: color = ORANGE; break;
+        }
+
+        DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, color);
     }
     
     //draw debug
@@ -174,6 +187,6 @@ void BoidManager::draw() const
     
     std::string updateTime = "update time : " + std::to_string(mLastUpdateTime / 1000) + " ms";
     std::string boidTime = "boid time : " + std::to_string(static_cast<float>(mLastUpdateTime) / static_cast<float>(mBoidNumber)) + " us";
-    DrawText(updateTime.c_str(), 50, 50, 20, DARKGREEN);
-    DrawText(boidTime.c_str(), 50, 70, 20, DARKGREEN);
+    DrawText(updateTime.c_str(), 10, 10, 20, DARKGREEN);
+    DrawText(boidTime.c_str(), 10, 30, 20, DARKGREEN);
 }

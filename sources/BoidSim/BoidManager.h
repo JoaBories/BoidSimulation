@@ -1,5 +1,6 @@
 #pragma once
 #include "GameActor.h"
+#include "BoidSim/BoidGrid.h"
 
 struct BoidWeights
 {
@@ -15,6 +16,8 @@ private:
     std::vector<Vect2F> mBoidVelocities;
     std::vector<BoidWeights> mBoidWeights;
     uint32_t mBoidNumber;
+
+    BoidGrid mGrid;
     
     int mLastUpdateTime;
     
@@ -23,7 +26,7 @@ private:
     float mAlignRange = 50.0f;
     float mGroupRange = 70.0f;
     float mPerceptionAngle = 180.0f;
-    float mMaxSpeed = 100.0f;
+    float mMaxSpeed = 50.0f;
     
     void resolveVelocity();
     void checkScreenBounds();

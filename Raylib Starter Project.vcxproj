@@ -95,6 +95,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="sources\BoidSim\BoidGrid.cpp" />
     <ClCompile Include="sources\AssetBank.cpp" />
     <ClCompile Include="sources\BoidSim\BoidManager.cpp" />
     <ClCompile Include="sources\Cam2D.cpp" />
@@ -107,6 +108,7 @@
     <ClCompile Include="sources\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sources\BoidSim\BoidGrid.h" />
     <ClInclude Include="sources\AssetBank.h" />
     <ClInclude Include="sources\BoidSim\BoidManager.h" />
     <ClInclude Include="sources\Cam2D.h" />
