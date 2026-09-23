@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoidSim/BoidManager.h"
+#include "AssetBank.h"
 
 class Engine
 {

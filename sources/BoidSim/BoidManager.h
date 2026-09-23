@@ -1,5 +1,4 @@
 #pragma once
-#include "GameActor.h"
 #include "BoidSim/BoidGrid.h"
 
 struct BoidWeights
@@ -19,8 +18,9 @@ private:
 
     BoidGrid mGrid;
     
-    int mLastUpdateTime;
-    int mLastGridUpdateTime;
+    uint64_t mLastUpdateTime;
+    uint64_t mLastGridUpdateTime;
+    uint64_t mUpdateCount;
     
     BoidWeights mDefaultWeights = {10.0f, 0.5f, 2.0f};
     float mSeparateRange = 40.0f;
@@ -41,6 +41,11 @@ public:
     explicit BoidManager(uint32_t agentNumber);
     
     ~BoidManager();
+    
+    BoidManager(const BoidManager& other) = delete;
+    BoidManager(BoidManager&& other) noexcept = delete;
+    BoidManager& operator=(const BoidManager& other) = delete;
+    BoidManager& operator=(BoidManager&& other) noexcept = delete;
     
     void init();
     void update();

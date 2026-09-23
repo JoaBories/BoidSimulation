@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "GameActor.h"
 
 void Engine::init()
 {

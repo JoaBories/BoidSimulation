@@ -7,22 +7,21 @@
 using Struct::Vect2F;
 using Struct::Vect2I;
 
-constexpr size_t sizeY = 20;
-constexpr size_t sizeX = 20;
+constexpr int SIZE_Y = 10;
+constexpr int SIZE_X = 10;
 
 class BoidGrid
 {
 private:
-	std::array<std::array<std::vector<int>, sizeX>, sizeY> mGrid;
-	Vect2F gridSize;
+	std::array<std::array<std::vector<int>, SIZE_X>, SIZE_Y> mGrid;
 
 public:
 	BoidGrid();
 
 	void updateGrid(const std::vector<Vect2F>& boidPositions);
 
-	const std::vector<int>& getNeighbors(const Vect2I& gridPosition) const;
+	[[nodiscard]] const std::vector<int>& getNeighbors(const Vect2I& gridPosition) const;
 
-	const Vect2I& getGridPos(const Vect2F& position) const;
-	const Vect2F& getGridSize() const;
+	[[nodiscard]] Vect2I getGridPos(const Vect2F& position) const;
+	[[nodiscard]] Vect2F getGridSize() const;
 };
