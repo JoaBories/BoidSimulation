@@ -8,6 +8,8 @@ class Engine
 private :
 	AssetBank* mAssetBank;
 	BoidManager* mBoidManager;
+	
+	float time;
 
 public :
 	Engine() = default;
@@ -21,7 +23,7 @@ public :
 	void init();
 	void close();
 
-	void update() const;
+	void update();
 	void draw() const;
 };
 

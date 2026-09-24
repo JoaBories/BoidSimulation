@@ -2,21 +2,21 @@
 
 BoidGrid::BoidGrid()
 {
-	mGrid.fill(std::array<std::vector<int>, SIZE_Y>());
+	mGrid.fill(std::array<std::vector<int>, GRID_SIZE>());
 
-	for (size_t y = 0; y < SIZE_Y; y++)
+	for (size_t y = 0; y < GRID_SIZE; y++)
 	{
 		mGrid[y].fill(std::vector<int>());
 	}
 }
 
-void BoidGrid::updateGrid(const std::vector<Vect2F>& boidPositions)
+void BoidGrid::updateGrid(const std::vector<Vec2F>& boidPositions)
 {
-	const Vect2F gridSize = getGridSize();
+	const Vec2F gridSize = getGridSize();
 
-	for (size_t y = 0; y < SIZE_Y; y++)
+	for (size_t y = 0; y < GRID_SIZE; y++)
 	{
-		for (size_t x = 0; x < SIZE_X; x++)
+		for (size_t x = 0; x < GRID_SIZE; x++)
 		{
 			mGrid[y][x].clear();
 		}
@@ -24,30 +24,30 @@ void BoidGrid::updateGrid(const std::vector<Vect2F>& boidPositions)
 
 	for (uint32_t i = 0; i < boidPositions.size(); i++)
 	{
-		const size_t x = Math::Clamp<int>((int)(boidPositions[i].x / gridSize.x), 0, SIZE_X - 1);
-		const size_t y = Math::Clamp<int>((int)(boidPositions[i].y / gridSize.y), 0, SIZE_Y - 1);
+		const size_t x = Math::clamp<int>((int)(boidPositions[i].x / gridSize.x), 0, GRID_SIZE - 1);
+		const size_t y = Math::clamp<int>((int)(boidPositions[i].y / gridSize.y), 0, GRID_SIZE - 1);
 
 		mGrid[y][x].emplace_back(i);
 	}
 }
 
-const std::vector<int>& BoidGrid::getNeighbors(const Vect2I& gridPosition) const
+const std::vector<int>& BoidGrid::getNeighbors(const Vec2I& gridPosition) const
 {
 	return mGrid[gridPosition.y][gridPosition.x];
 }
 
-Vect2I BoidGrid::getGridPos(const Vect2F& position) const
+Vec2I BoidGrid::getGridPos(const Vec2F& position) const
 {
-	const Vect2F gridSize = getGridSize();
+	const Vec2F gridSize = getGridSize();
 
-	int x = Math::Clamp((int)(position.x / gridSize.x), 0, SIZE_X - 1);
-	int y = Math::Clamp((int)(position.y / gridSize.y), 0, SIZE_Y - 1);
+	int x = Math::clamp((int)(position.x / gridSize.x), 0, GRID_SIZE - 1);
+	int y = Math::clamp((int)(position.y / gridSize.y), 0, GRID_SIZE - 1);
 
 	return { x, y };
 }
 
-Vect2F BoidGrid::getGridSize() const
+Vec2F BoidGrid::getGridSize() const
 {
-	const Vect2F screenBounds(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
-	return screenBounds / Vect2F(SIZE_X, SIZE_Y);
+	const Vec2F screenBounds(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
+	return screenBounds / Vec2F(GRID_SIZE, GRID_SIZE);
 }

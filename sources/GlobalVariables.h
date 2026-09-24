@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Util.h"
-using Struct::Vect2F;
+using Struct::Vec2F;
 
 class GlobalVariables
 {

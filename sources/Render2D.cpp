@@ -6,7 +6,7 @@ Rect2 Render2D::toScreenSpace(const Rect2& actorSpaceRect) const
 
 	Cam2D* camPtr = Cam2D::GetInstance();
 
-	textureToScreen.center = (actorSpaceRect.center - camPtr->GetPosition()) * camPtr->GetZoom() + Vect2F{(float)GetScreenWidth(), (float)GetScreenHeight()} * 0.5f;
+	textureToScreen.center = (actorSpaceRect.center - camPtr->GetPosition()) * camPtr->GetZoom() + Vec2F{(float)GetScreenWidth(), (float)GetScreenHeight()} * 0.5f;
 	textureToScreen.halfSize = actorSpaceRect.halfSize * camPtr->GetZoom();
 	textureToScreen.rotation = actorSpaceRect.rotation;
 
@@ -20,13 +20,13 @@ bool Render2D::isVisible(const Rect2& screenSpaceRect) const
 		return true;
 	}
 
-	std::vector<Vect2F> corners = screenSpaceRect.getCorners();
+	std::vector<Vec2F> corners = screenSpaceRect.getCorners();
 
 	Rect2 camSpace = Cam2D::GetInstance()->GetSafeCamSpace();
 
 	for (const auto& corner : corners)
 	{
-		if (camSpace.ContainPoint(corner))
+		if (camSpace.containPoint(corner))
 		{
 			return true;
 		}

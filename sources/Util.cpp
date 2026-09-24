@@ -1,70 +1,65 @@
 #include "Util.h"
+#include <random>
 
-using Struct::Vect2F;
-using Struct::Vect2I;
+using Struct::Vec2F;
+using Struct::Vec2I;
 using Struct::Rect2;
 using Struct::Collision;
 
 #pragma region MathUtils
 
-Vect2F Math::Vect2FromRot(float rot)
+Vec2F Struct::vec2FromRot(const float rot)
 {
-	Vect2F vector = { cosf(rot * DEG2RAD), sinf(rot * DEG2RAD) };
+	const Vec2F vector = { cosf(rot * DEG2RAD), sinf(rot * DEG2RAD) };
 	return vector.normalized();
 }
 
-float Math::OverlapOnAxis(const std::vector<Vect2F>& a, const std::vector<Vect2F>& b, Vect2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
+float Struct::overlapOnAxis(const std::vector<Vec2F>& a, const std::vector<Vec2F>& b, const Vec2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
 {
 	float aMin = FLT_MAX, aMax = -FLT_MAX;
 	float bMin = FLT_MAX, bMax = -FLT_MAX;
 
 	for (const auto& point : a) 
 	{
-		float projection = point.dot(axis);
-		aMin = Min(projection, aMin);
-		aMax = Max(projection, aMax);
+		const float projection = point.dot(axis);
+		aMin = min(projection, aMin);
+		aMax = max(projection, aMax);
 	}
 
 	for (const auto& point : b)
 	{
-		float projection = point.dot(axis);
-		bMin = Min(projection, bMin);
-		bMax = Max(projection, bMax);
+		const float projection = point.dot(axis);
+		bMin = min(projection, bMin);
+		bMax = max(projection, bMax);
 	}
 
-	return Min(aMax, bMax) - Max(aMin, bMin);
+	return min(aMax, bMax) - max(aMin, bMin);
 }
 
-bool Math::NearlyEqual(const float a, const float b)
+int Math::randInt(const int min, const int max)
 {
-	float epsilon = 0.000001f;
-	return Abs( a - b ) < epsilon;
-}
-
-int Math::RandInt(int min, int max)
-{
-	int random = min + rand() % (min + max);
+	const int random = min + rand() % (min + max);
 
 	return random;
 }
 
-float Math::RandFloat(float min, float max)
+float Math::randFloat(const float min, const float max)
 {
-	float random = (float)rand() / (float)RAND_MAX;
+	const float random = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 
 	return min + random * (max - min);
 }
 
-Vect2F Math::trigToCoord(const float angle, const float radius)
+Vec2F Struct::trigToCoord(const float angle, const float radius)
 {
 	float x = radius * cos(angle);
 	float y = radius * sin(angle);
 	return { x,y };
 }
 
-bool Math::PointInCircle(const Vect2F& point, const Vect2F& circleCenter, float circleRadius)
+bool Struct::pointInCircle(const Vec2F& point, const Vec2F& circleCenter, float circleRadius)
 {
-	const Vect2F distance = point - circleCenter;
+	const Vec2F distance = point - circleCenter;
 	return distance.sqrLength() <= circleRadius * circleRadius;
 }
 
@@ -74,102 +69,37 @@ bool Math::PointInCircle(const Vect2F& point, const Vect2F& circleCenter, float 
 
 #pragma region Vectors
 
-//Vect2F
+//Vec2F
 
-const Vect2F Vect2F::zero = { 0,0 };
-const Vect2F Vect2F::one = { 1,1 };
-const Vect2F Vect2F::up = { 0,1 };
-const Vect2F Vect2F::down = { 0,-1 };
-const Vect2F Vect2F::right = { 1,0 };
-const Vect2F Vect2F::left = { -1,0 };
+const Vec2F Vec2F::Zero = { 0,0 };
+const Vec2F Vec2F::One = { 1,1 };
+const Vec2F Vec2F::Up = { 0,1 };
+const Vec2F Vec2F::Down = { 0,-1 };
+const Vec2F Vec2F::Right = { 1,0 };
+const Vec2F Vec2F::Left = { -1,0 };
 
-bool Vect2F::operator==(const Vect2F& rm) const
-{ 
-	return (Math::NearlyEqual(x, rm.x) && Math::NearlyEqual(y, rm.y)); 
-}
+//Vec2I
 
-float Vect2F::getRot() const
-{
-	if (x == 0 && y == 0) return 0;
-
-	float a = atan2f(y, x) * RAD2DEG;
-	if (a < 0) a += 360.0f;
-
-	return a;
-}
-
-Vect2F Vect2F::absolute() const
-{
-	return { Math::Abs(x), Math::Abs(y) };
-}
-
-Vect2F Vect2F::normalized() const
-{
-	if (*this == Vect2F::zero)
-	{
-		return Vect2F::zero;
-	}
-
-	float l = length();
-	return { x / l, y / l };
-}
-
-Vect2F Struct::Vect2F::clamp(float min, float max) const
-{
-	float sqrL = sqrLength();
-
-	if (sqrL < min * min)
-	{
-		return normalized() * min;
-	}
-	else
-	{
-		if (sqrL > max * max)
-		{
-			return normalized() * max;
-		}
-	}
-
-	return *this;
-}
-
-//Vect2I
-
-const Vect2I Vect2I::zero = { 0,0 };
-const Vect2I Vect2I::one = { 1,1 };
-const Vect2I Vect2I::up = { 0,1 };
-const Vect2I Vect2I::down = { 0,-1 };
-const Vect2I Vect2I::right = { 1,0 };
-const Vect2I Vect2I::left = { -1,0 };
-
-float Vect2I::getRot() const
-{
-	if (x == 0 && y == 0) return 0;
-
-	float a = atan2f((float)y, (float)x) * RAD2DEG;
-	if (a < 0) a += 360;
-		
-	return a;
-}
-
-Vect2I Vect2I::absolute() const
-{
-	return { Math::Abs(x), Math::Abs(y) };
-}
+const Vec2I Vec2I::Zero = { 0,0 };
+const Vec2I Vec2I::One = { 1,1 };
+const Vec2I Vec2I::Up = { 0,1 };
+const Vec2I Vec2I::Down = { 0,-1 };
+const Vec2I Vec2I::Right = { 1,0 };
+const Vec2I Vec2I::Left = { -1,0 };
 
 #pragma endregion
 
 #pragma region Rectangle
 
-std::vector<Vect2F> Rect2::getCorners() const
+std::vector<Vec2F> Rect2::getCorners() const
 {
-	std::vector<Vect2F> corners(4);
+	std::vector<Vec2F> corners(4);
 
-	float cosA = cosf(rotation * DEG2RAD);
-	float sinA = sinf(rotation * DEG2RAD);
+	const float cosA = cosf(rotation * DEG2RAD);
+	const float sinA = sinf(rotation * DEG2RAD);
 
-	Vect2F right = { cosA, sinA };
-	Vect2F up = { -sinA, cosA };
+	const Vec2F right = { cosA, sinA };
+	const Vec2F up = { -sinA, cosA };
 
 	corners[0] = center + right * halfSize.x + up * halfSize.y;
 	corners[1] = center + right * -halfSize.x + up * halfSize.y;
@@ -179,56 +109,56 @@ std::vector<Vect2F> Rect2::getCorners() const
 	return corners;
 }
 
-Collision Rect2::CheckAABB(const Rect2& other) const
+Collision Rect2::checkAabb(const Rect2& other) const
 {
-	Collision result = Collision();
+	Collision result{};
 
-	Vect2F aMin = { center.x - halfSize.x, center.y - halfSize.y };
-	Vect2F aMax = { center.x + halfSize.x, center.y + halfSize.y };
-	Vect2F bMin = { other.center.x - other.halfSize.x, other.center.y - other.halfSize.y };
-	Vect2F bMax = { other.center.x + other.halfSize.x, other.center.y + other.halfSize.y };
+	const Vec2F aMin = { center.x - halfSize.x, center.y - halfSize.y };
+	const Vec2F aMax = { center.x + halfSize.x, center.y + halfSize.y };
+	const Vec2F bMin = { other.center.x - other.halfSize.x, other.center.y - other.halfSize.y };
+	const Vec2F bMax = { other.center.x + other.halfSize.x, other.center.y + other.halfSize.y };
 
 	if (aMin.x <= bMax.x && aMax.x >= bMin.x && aMin.y <= bMax.y && aMax.y >= bMin.y)
 	{
 		result.collided = true;
 
-		Vect2F overlap = Vect2F();
-		overlap.x = Math::Min(aMax.x, bMax.x) - Math::Max(aMin.x, bMin.x);
-		overlap.y = Math::Min(aMax.y, bMax.y) - Math::Max(aMin.y, bMin.y);
+		Vec2F overlap{};
+		overlap.x = Math::min(aMax.x, bMax.x) - Math::max(aMin.x, bMin.x);
+		overlap.y = Math::min(aMax.y, bMax.y) - Math::max(aMin.y, bMin.y);
 
 		if (overlap.x < overlap.y) // Getting minimal overlap and his axis
 		{
 			result.overlap = overlap.x;
-			result.axis = (center.x > other.center.x) ? Vect2F::right : Vect2F::left;
+			result.axis = (center.x > other.center.x) ? Vec2F::Right : Vec2F::Left;
 		}
 		else
 		{
 			result.overlap = overlap.y;
-			result.axis = (center.y > other.center.y) ? Vect2F::up : Vect2F::down;
+			result.axis = (center.y > other.center.y) ? Vec2F::Up : Vec2F::Down;
 		}
 	}
 
 	return result; // if AABB false collided -> true, axis -> {0,0} and overlap -> 0 by default
 }
 
-bool Struct::Rect2::ContainPoint(const Vect2F& point) const
+bool Rect2::containPoint(const Vec2F& point) const
 {
-	Vect2F aMin = { center.x - halfSize.x, center.y - halfSize.y };
-	Vect2F aMax = { center.x + halfSize.x, center.y + halfSize.y };
+	const Vec2F aMin = { center.x - halfSize.x, center.y - halfSize.y };
+	const Vec2F aMax = { center.x + halfSize.x, center.y + halfSize.y };
 
 	//Same as AABB but there is just onepoint so the max and the min are the same
 	return point.x >= aMin.x && point.x <= aMax.x && point.y >= aMin.y && point.y <= aMax.y;
 }
 
-void Struct::Rect2::DrawDebug(float scale) const
+void Rect2::drawDebug(const float scale) const
 {
 	DrawCircleV(center.toRaylib(), scale, RED);
 
-	std::vector<Vect2F> corners = getCorners();
+	std::vector<Vec2F> corners = getCorners();
 
-	Vect2F& lastCorner = corners[3];
+	Vec2F& lastCorner = corners[3];
 
-	for (const Vect2F& corner : corners)
+	for (const Vec2F& corner : corners)
 	{
 		DrawCircleV(corner.toRaylib(), scale * 0.5f, GREEN);
 		DrawLineV(corner.toRaylib(), lastCorner.toRaylib(), GREEN);
@@ -236,32 +166,30 @@ void Struct::Rect2::DrawDebug(float scale) const
 	}
 }
 
-Collision Rect2::CheckOBB(const Rect2& other) const
+Collision Rect2::checkObb(const Rect2& other) const
 {
-	Collision result = Collision();
+	Collision result{};
 
-	if (rotation == 0 && other.rotation == 0) // i can improve by using AABB for same rot rectangle or 90 rotated rectangles | i believe
+	if (rotation == 0.0f && other.rotation == 0.0f) // I can improve by using AABB for same rot rectangle or 90 rotated rectangles | I believe
 	{
-		result = CheckAABB(other); // more optimized
+		result = checkAabb(other); // more optimized
 	}
 	else
 	{
-		std::vector<Vect2F> aCorners = getCorners();
-		std::vector<Vect2F> bCorners = other.getCorners();
+		const std::vector<Vec2F> aCorners = getCorners();
+		const std::vector<Vec2F> bCorners = other.getCorners();
 
-		std::vector<Vect2F> axes;
+		std::vector<Vec2F> axes;
 
-		axes.push_back((aCorners[0] - aCorners[1]).PerpendicularCW());	// 2 axes is enough for a rectangle
-		axes.push_back((aCorners[1] - aCorners[2]).PerpendicularCW()); 
+		axes.push_back((aCorners[0] - aCorners[1]).perpendicularCw());	// 2 axes is enough for a rectangle
+		axes.push_back((aCorners[1] - aCorners[2]).perpendicularCw()); 
 
-		axes.push_back((bCorners[0] - bCorners[1]).PerpendicularCW());
-		axes.push_back((bCorners[1] - bCorners[2]).PerpendicularCW());
+		axes.push_back((bCorners[0] - bCorners[1]).perpendicularCw());
+		axes.push_back((bCorners[1] - bCorners[2]).perpendicularCw());
 
 		for (const auto& axis : axes)									// Testing overlap on all axes. If there is overlap on all of them then there is collision
 		{
-			float overlap = Math::OverlapOnAxis(aCorners, bCorners, axis);
-			
-			if (overlap < 0)
+			if (const float overlap = Struct::overlapOnAxis(aCorners, bCorners, axis); overlap < 0)
 			{
 				return result;
 			}

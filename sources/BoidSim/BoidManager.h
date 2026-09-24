@@ -11,8 +11,8 @@ struct BoidWeights
 class BoidManager
 {
 private:
-    std::vector<Vect2F> mBoidPositions;
-    std::vector<Vect2F> mBoidVelocities;
+    std::vector<Vec2F> mBoidPositions;
+    std::vector<Vec2F> mBoidVelocities;
     std::vector<BoidWeights> mBoidWeights;
     uint32_t mBoidNumber;
 
@@ -50,4 +50,6 @@ public:
     void init();
     void update();
     void draw() const;
+    
+    void logAverageUpdate();
 };

@@ -3,13 +3,15 @@
 
 void Engine::init()
 {
-	InitWindow(1280, 720, "Boid Simulation");
+	InitWindow(800, 800, "Boid Simulation");
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(5000);
+	time = 0.0f;
+	
+	mBoidManager = new BoidManager(500);
 }
 
 void Engine::close()
@@ -23,7 +25,7 @@ void Engine::close()
 	mBoidManager = nullptr;
 }
 
-void Engine::update() const
+void Engine::update()
 {
 	mBoidManager->update();
 	
@@ -33,6 +35,13 @@ void Engine::update() const
 		{
 			if (actor->IsActive()) actor->Update();
 		}
+	}
+	
+	time += GetFrameTime();
+	if (time >= 60.0f)
+	{
+		mBoidManager->logAverageUpdate();
+		time = 0.0f;
 	}
 
 	GameActor::killPendingsActors();

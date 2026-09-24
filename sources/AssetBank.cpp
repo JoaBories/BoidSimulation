@@ -20,17 +20,17 @@ void AssetBank::SearchAFolder(const path& folderPath)
 		{
 			if (entry.path().filename() == "_Fonts")
 			{
-				cout << "======== Fetching Fonts" << endl;
+				std::cout << "======== Fetching Fonts" << '\n';
 				SearchAFolderFor(entry.path(), AssetFont);
 			}
 			else if (entry.path().filename() == "_Textures")
 			{
-				cout << "======== Fetching Textures" << endl;
+				std::cout << "======== Fetching Textures" << '\n';
 				SearchAFolderFor(entry.path(), AssetTexture);
 			}
 			else if (entry.path().filename() == "_Sounds")
 			{
-				cout << "======== Fetching Sounds" << endl;
+				std::cout << "======== Fetching Sounds" << '\n';
 				SearchAFolderFor(entry.path(), AssetSound);
 			}
 			else
@@ -78,7 +78,7 @@ void AssetBank::SearchAFolderFor(const path& folderPath, AssetType forWhat)
 
 void AssetBank::FetchAll()
 {
-	cout << "==========| Start fetching Files" << endl;
+	std::cout << "==========| Start fetching Files" << '\n';
 	auto startTime = clk::now();
 
 	UnfetchAll();
@@ -87,7 +87,7 @@ void AssetBank::FetchAll()
 	SearchAFolder(rootPath);
 
 	auto endTime = clk::now();
-	cout << "==========| Finish fetching Files in : "<< std::chrono::duration<double>(endTime - startTime).count() << "s" << endl;
+	std::cout << "==========| Finish fetching Files in : "<< std::chrono::duration<double>(endTime - startTime).count() << "s" << '\n';
 }
 
 void AssetBank::UnfetchAll()
@@ -99,7 +99,7 @@ void AssetBank::UnfetchAll()
 
 void AssetBank::LoadAll()
 {
-	cout << "==========| Start loading Files" << endl;
+	std::cout << "==========| Start loading Files" << '\n';
 	auto startTime = clk::now();
 
 	UnloadAll();
@@ -120,7 +120,7 @@ void AssetBank::LoadAll()
 	}
 
 	auto endTime = clk::now();
-	cout << "==========| Finish loading Files in : " << std::chrono::duration<double>(endTime - startTime).count() << "s" << endl;
+	std::cout << "==========| Finish loading Files in : " << std::chrono::duration<double>(endTime - startTime).count() << "s" << '\n';
 }
 
 void AssetBank::UnloadAll()
@@ -151,10 +151,10 @@ bool AssetBank::FetchATexture(std::filesystem::path texturePath)
 
 			if (fileWrite)
 			{
-				fileWrite << name << endl;
-				fileWrite << false << endl;
-				fileWrite << 0 << " " << 0 << endl;
-				fileWrite << 0 << " " << 0 << endl;
+				fileWrite << name << '\n';
+				fileWrite << false << '\n';
+				fileWrite << 0 << " " << 0 << '\n';
+				fileWrite << 0 << " " << 0 << '\n';
 			}
 
 			fileWrite.close();
@@ -166,7 +166,7 @@ bool AssetBank::FetchATexture(std::filesystem::path texturePath)
 	}
 	else
 	{
-		cout << " Error trying to fetch " << texturePath.string() << " : bad extension" << endl;
+		std::cout << " Error trying to fetch " << texturePath.string() << " : bad extension" << '\n';
 		return false;
 	}
 }
@@ -212,14 +212,14 @@ bool AssetBank::LoadATexture(std::string textureName)
 			}
 			else
 			{
-				cout << "Failed to read .asset file : " << dotAssetPath << endl;
+				std::cout << "Failed to read .asset file : " << dotAssetPath << '\n';
 			}
 
 			fileRead.close();
 		}
 		else
 		{
-			cout << " Error trying to load " << textureName << " : bad extension" << endl;
+			std::cout << " Error trying to load " << textureName << " : bad extension" << '\n';
 			return false;
 		}
 
@@ -246,7 +246,7 @@ bool AssetBank::FetchAFont(std::filesystem::path fontPath)
 			fileWrite.open(dotAssetPath);
 			if (fileWrite)
 			{
-				fileWrite << name << endl;
+				fileWrite << name << '\n';
 			}
 
 			fileWrite.close();
@@ -258,7 +258,7 @@ bool AssetBank::FetchAFont(std::filesystem::path fontPath)
 	}
 	else
 	{
-		cout << " Error trying to fetch " << fontPath.string() << " : bad extension" << endl;
+		std::cout << " Error trying to fetch " << fontPath.string() << " : bad extension" << '\n';
 		return false;
 	}
 }
@@ -286,14 +286,14 @@ bool AssetBank::LoadAFont(const std::string& fontName)
 			}
 			else
 			{
-				cout << "Failed to read .asset file : " << dotAssetPath << endl;
+				std::cout << "Failed to read .asset file : " << dotAssetPath << '\n';
 			}
 
 			fileRead.close();
 		}
 		else
 		{
-			cout << " Error trying to load " << fontName << " : bad extension" << endl;
+			std::cout << " Error trying to load " << fontName << " : bad extension" << '\n';
 			return false;
 		}
 
@@ -322,8 +322,8 @@ bool AssetBank::FetchASound(std::filesystem::path soundPath)
 
 			if (fileWrite)
 			{
-				fileWrite << name << endl;
-				fileWrite << 0 << endl;
+				fileWrite << name << '\n';
+				fileWrite << 0 << '\n';
 			}
 
 			fileWrite.close();
@@ -335,7 +335,7 @@ bool AssetBank::FetchASound(std::filesystem::path soundPath)
 	}
 	else
 	{
-		cout << " Error trying to fetch " << soundPath.string() << " : bad extension" << endl;
+		std::cout << " Error trying to fetch " << soundPath.string() << " : bad extension" << '\n';
 		return false;
 	}
 }
@@ -369,14 +369,14 @@ bool AssetBank::LoadASound(const std::string& soundName)
 			}
 			else
 			{
-				cout << "Failed to read .asset file : " << dotAssetPath << endl;
+				std::cout << "Failed to read .asset file : " << dotAssetPath << '\n';
 			}
 
 			fileRead.close();
 		}
 		else
 		{
-			cout << " Error trying to load " << soundName << " : bad extension" << endl;
+			std::cout << " Error trying to load " << soundName << " : bad extension" << '\n';
 			return false;
 		}
 

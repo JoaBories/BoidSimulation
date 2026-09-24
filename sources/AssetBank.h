@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Util.h"
-using Struct::Vect2I;
+using Struct::Vec2I;
 
 #include <string>
 #include <unordered_map>
@@ -14,12 +14,12 @@ struct TextureEntry
 	Texture* pTexture;
 	std::string name;
 	bool multiple;
-	Vect2I tileSize;
-	Vect2I tileOffset;
+	Vec2I tileSize;
+	Vec2I tileOffset;
 	
 	TextureEntry() = default;
-	inline TextureEntry(Texture* texture, const std::string& _name, Vect2I _tileSize = Vect2I::zero, Vect2I _tileOffset = Vect2I::zero) :
-		pTexture{ texture }, name{ _name }, multiple{ _tileSize != Vect2I::zero }, tileSize{ _tileSize }, tileOffset{ _tileOffset } {}
+	inline TextureEntry(Texture* texture, const std::string& _name, Vec2I _tileSize = Vec2I::Zero, Vec2I _tileOffset = Vec2I::Zero) :
+		pTexture{ texture }, name{ _name }, multiple{ _tileSize != Vec2I::Zero }, tileSize{ _tileSize }, tileOffset{ _tileOffset } {}
 
 	inline ~TextureEntry() {
 		UnloadTexture(*pTexture); delete pTexture; }

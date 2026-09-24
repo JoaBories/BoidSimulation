@@ -2,250 +2,195 @@
 #include "raylib.h"
 
 #include <iostream>
-using std::cout, std::endl;
-
-#include <random>
-#include <cmath>
-
 #include <vector>
 
 // Note : 
 // -rm for right member
-// -i use rotation in degrees (unless otherwise specified)
-// -i use float (unless otherwise specified)
+// -I use rotation in degrees (unless otherwise specified)
+// -I use float (unless otherwise specified)
+
+namespace Math
+{
+	template <typename T>
+	constexpr T min(T a, T b) noexcept											{ return a <= b ? a : b; };
+
+	template <typename T>
+	constexpr T max(T a, T b) noexcept											{ return a >= b ? a : b; };
+	
+	template <typename T>
+	constexpr T clamp(T value, T minimum, T maximum) noexcept					{ return max(min(value, maximum), minimum); };
+	
+	template <typename T>
+	constexpr T abs(T value) noexcept											{ return (value < 0) ? -value : value; };
+	
+	template <typename T>
+	constexpr T sign(T value) noexcept											{ return (value > 0) ? T(1) : (value < 0 ? T(-1) : T(0)); };
+
+	template <typename T>
+	constexpr T lerp(T a, T b, T t)	noexcept									{ return a + (b - a) * clamp(t, T(0), T(1)); };
+	
+	template <typename T>
+	constexpr bool nearlyEqual(const T a, const T b, const T epsilon = static_cast<T>(0.00001f)) noexcept	{ return abs( a - b ) < epsilon; }
+	
+	int randInt(int min, int max);
+	float randFloat(float min, float max);
+}
 
 namespace Struct {
 
-	//Vector2 with lot of function and operators for easy use | Int version if needed for integral coordinates
-	struct Vect2F
+	using namespace Math;
+	
+	//Vector2 with a lot of function and operators for easy use | Int version if needed for integral coordinates
+	template<typename T>
+	struct Vec2
 	{
-		float x;
-		float y;
+		T x;
+		T y;
 
-		static const Vect2F zero;
-		static const Vect2F one;
-		static const Vect2F up;
-		static const Vect2F down;
-		static const Vect2F right;
-		static const Vect2F left;
+		static const Vec2 Zero;
+		static const Vec2 One;
+		static const Vec2 Up;
+		static const Vec2 Down;
+		static const Vec2 Right;
+		static const Vec2 Left;
 
-		Vect2F() = default;
-		inline Vect2F(float x_, float y_) :	x{ x_ }, y{ y_ } {}
-		inline Vect2F(Vector2 vector2_) :	x{ vector2_.x }, y{ vector2_.y } {}
+		Vec2() = default;
+		constexpr Vec2(T x_, T y_) noexcept :					x{ x_ }, y{ y_ } {}
+		explicit constexpr Vec2(Vector2 vector2_) noexcept :	x{ vector2_.x }, y{ vector2_.y } {}
 
 		//Addition
-		inline Vect2F operator+(const Vect2F& rm) const { return { x + rm.x, y + rm.y }; }
-		inline Vect2F& operator+=(const Vect2F& rm)		{ x += rm.x; y += rm.y; return *this; }
+		constexpr Vec2 operator+(const Vec2& rm) const noexcept { return { x + rm.x, y + rm.y }; }
+		constexpr Vec2& operator+=(const Vec2& rm) noexcept		{ x += rm.x; y += rm.y; return *this; }
 
 		//Substraction
-		inline Vect2F operator-(const Vect2F& rm) const { return { x - rm.x, y - rm.y }; }
-		inline Vect2F& operator-=(const Vect2F& rm)		{ x -= rm.x; y -= rm.y; return *this; }
+		constexpr Vec2 operator-(const Vec2& rm) const noexcept { return { x - rm.x, y - rm.y }; }
+		constexpr Vec2& operator-=(const Vec2& rm) noexcept		{ x -= rm.x; y -= rm.y; return *this; }
 
 		//Negation
-		inline Vect2F operator-() const					{ return { -x, -y }; }
+		constexpr Vec2 operator-() const noexcept					{ return { -x, -y }; }
 
 		//Scale Up
-		inline Vect2F operator*(const float& rm) const	{ return { x * rm, y * rm }; }
-		inline Vect2F& operator*=(const float& rm)		{ x *= rm; y *= rm; return *this; }
-		inline Vect2F operator*(const int& rm) const	{ return { x * rm, y * rm }; }
-		inline Vect2F& operator*=(const int& rm)		{ x *= rm; y *= rm; return *this; }
+		constexpr Vec2 operator*(const float& rm) const noexcept	{ return { x * rm, y * rm }; }
+		constexpr Vec2& operator*=(const float& rm) noexcept		{ x *= rm; y *= rm; return *this; }
+		constexpr Vec2 operator*(const int& rm) const noexcept	{ return { x * rm, y * rm }; }
+		constexpr Vec2& operator*=(const int& rm)	noexcept		{ x *= rm; y *= rm; return *this; }
 
 		//Scale Down
-		inline Vect2F operator/(const float& rm) const	{ return { x / rm, y / rm }; }
-		inline Vect2F& operator/=(const float& rm)		{ x /= rm; y /= rm; return *this; }
-		inline Vect2F operator/(const int& rm) const	{ return { x / rm, y / rm }; }
-		inline Vect2F& operator/=(const int& rm)		{ x /= rm; y /= rm; return *this; }
+		constexpr Vec2 operator/(const float& rm) const noexcept	{ return { x / rm, y / rm }; }
+		constexpr Vec2& operator/=(const float& rm) noexcept		{ x /= rm; y /= rm; return *this; }
+		constexpr Vec2 operator/(const int& rm) const	noexcept	{ return { x / rm, y / rm }; }
+		constexpr Vec2& operator/=(const int& rm)	noexcept		{ x /= rm; y /= rm; return *this; }
 
 		//Multiplication
-		inline Vect2F operator*(const Vect2F& rm) const { return { x * rm.x, y * rm.y }; }
-		inline Vect2F& operator*=(const Vect2F& rm)		{ x *= rm.x; y *= rm.y; return *this; }
+		constexpr Vec2 operator*(const Vec2& rm) const noexcept { return { x * rm.x, y * rm.y }; }
+		constexpr Vec2& operator*=(const Vec2& rm) noexcept		{ x *= rm.x; y *= rm.y; return *this; }
 
 		//Division
-		inline Vect2F operator/(const Vect2F& rm) const { return { x / rm.x, y / rm.y }; }
-		inline Vect2F& operator/=(const Vect2F& rm)		{ x /= rm.x; y /= rm.y; return *this; }
+		constexpr Vec2 operator/(const Vec2& rm) const noexcept { return { x / rm.x, y / rm.y }; }
+		constexpr Vec2& operator/=(const Vec2& rm) noexcept		{ x /= rm.x; y /= rm.y; return *this; }
 
 		//Boolean
-		bool operator==(const Vect2F& rm) const;
-		inline bool operator!=(const Vect2F& rm) const	{ return !(*this == rm); }
+		bool operator==(const Vec2& rm) const noexcept { return nearlyEqual(x, rm.x) && nearlyEqual(y, rm.y); }
+		constexpr bool operator!=(const Vec2& rm) const noexcept	{ return !(*this == rm); }
 
 		//Dot Product
-		inline float dot(const Vect2F& other) const		{ return x * other.x + y * other.y; }
+		[[nodiscard]] constexpr T dot(const Vec2& other) const noexcept		{ return x * other.x + y * other.y; }
 
-		//Rotation from Vect2F
-		float getRot() const;
+		//Rotation from Vec2
+		[[nodiscard]] constexpr float getRot() const noexcept
+		{
+			if (x == 0 && y == 0) return 0;
+
+			float a = atan2f(y, x) * RAD2DEG;
+			if (a < 0) a += 360.0f;
+
+			return a;
+		}
 
 		//Perpendicular ClockWise or CounterClockWise 
-		inline Vect2F PerpendicularCCW() const			{ return { -y, x }; }
-		inline Vect2F PerpendicularCW() const			{ return { y, -x }; }
+		[[nodiscard]] constexpr Vec2 perpendicularCcw() const			{ return { -y, x }; }
+		[[nodiscard]] constexpr Vec2 perpendicularCw() const			{ return { y, -x }; }
 
 		//Squared Length and Length
-		inline float sqrLength() const					{ return x * x + y * y; }
-		inline float length() const						{ return sqrtf(sqrLength()); }
+		[[nodiscard]] constexpr float sqrLength() const	noexcept		{ return x * x + y * y; }
+		[[nodiscard]] constexpr float length() const noexcept			{ return sqrtf(sqrLength()); }
 
-		Vect2F absolute() const;
-		Vect2F normalized() const;
-		Vect2F clamp(float min, float max) const;
+		[[nodiscard]] constexpr Vec2 absolute() const noexcept			{ return { Math::abs(x), Math::abs(y) }; }
+		
+		[[nodiscard]] constexpr Vec2 normalized() const noexcept
+		{
+			if (*this == Vec2::Zero) return Vec2::Zero; 
+			float l = length(); 
+			return { x / l, y / l };
+		}
 
-		inline Vector2 toRaylib() const					{ return { x, y }; }
+		[[nodiscard]] constexpr Vector2 toRaylib() const noexcept		{ return { x, y }; }
 	};
-
-	struct Vect2I
-	{
-		int x;
-		int y;
-
-		static const Vect2I zero;
-		static const Vect2I one;
-		static const Vect2I up;
-		static const Vect2I down;
-		static const Vect2I right;
-		static const Vect2I left;
-
-		Vect2I() = default;
-		inline Vect2I(int x_, int y_) : x{ x_ }, y{ y_ } {}
-
-		//Addition
-		inline Vect2I operator+(const Vect2I& rm) const { return { x + rm.x, y + rm.y }; }
-		inline Vect2I& operator+=(const Vect2I& rm)		{ x += rm.x; y += rm.x; return *this; }
-
-		//Substraction
-		inline Vect2I operator-(const Vect2I& rm) const { return { x - rm.x, y - rm.y }; }
-		inline Vect2I& operator-=(const Vect2I& rm)		{ x -= rm.x; y -= rm.x; return *this; }
-
-		//Negation
-		inline Vect2I operator-() const					{ return { -x, -y }; }
-
-		//Scale Up
-		inline Vect2I operator*(const int& rm) const	{ return { x * rm, y * rm }; }
-		inline Vect2I& operator*=(const int& rm)		{ x *= rm; y *= rm; return *this; }
-
-		//Scale Down
-		inline Vect2I operator/(const int& rm) const	{ return { x / rm, y / rm }; }
-		inline Vect2I& operator/=(const int& rm)		{ x /= rm; y /= rm; return *this; }
-
-		//Multiplication
-		inline Vect2I operator*(const Vect2I& rm) const { return { x * rm.x, y * rm.y }; }
-		inline Vect2I& operator*=(const Vect2I& rm)		{ x *= rm.x; y *= rm.x; return *this; }
-
-		//Division
-		inline Vect2I operator/(const Vect2I& rm) const { return { x / rm.x, y / rm.y }; }
-		inline Vect2I& operator/=(const Vect2I& rm)		{ x /= rm.x; y /= rm.x; return *this; }
-
-		//Boolean
-		inline bool operator==(const Vect2I& rm) const	{ return (x == rm.x && y == rm.y); }
-		inline bool operator!=(const Vect2I& rm) const	{ return !(*this == rm); }
-
-		//Dot product
-		inline int dot(const Vect2I& other) const		{ return x * other.x + y * other.y; }
-
-		//Rotation form Vect2I
-		float getRot() const;
-
-		//Perpendicular ClockWise or CounterClockWise 
-		inline Vect2I PerpendicularCCW() const			{ return { -y, x }; }
-		inline Vect2I PerpendicularCW() const			{ return { y, -x }; }
-
-		//Squared Length and Lenght
-		inline int sqrLength() const					{ return x * x + y * y; }
-		inline float length() const						{ return sqrtf(static_cast<float>(sqrLength())); }
-
-		Vect2I absolute() const;
-
-		inline Vector2 toRaylib() const					{ return { static_cast<float>(x), static_cast<float>(y) }; }
-	};
+	
+	typedef Vec2<float> Vec2F;
+	typedef Vec2<int> Vec2I;
 
 	//Handle Collision infos
 	struct Collision
 	{
-		bool collided;
-		Vect2F axis;
+		Vec2F axis;
 		float overlap;
+		bool collided;
 
-		inline Vect2F getForce() const { return axis * overlap; }
+		[[nodiscard]] constexpr Vec2F getForce() const { return axis * overlap; }
 
-		inline operator bool() const { return collided; }
+		constexpr operator bool() const { return collided; }
 	};
 
 	//Simple Transform with : position / scale / rotation for 2d objects
 	struct Transform2D
 	{
-		Vect2F position = Vect2F::zero;
-		Vect2F scale = Vect2F::one;
+		Vec2F position = Vec2F::Zero;
+		Vec2F scale = Vec2F::One;
 		float rotation;
 	};
 
 	//Oriented Rectangle struct with Collision | origin is the center
 	struct Rect2
 	{
-		Vect2F center;
-		Vect2F halfSize;
+		Vec2F center;
+		Vec2F halfSize;
 		float rotation;
 
-		std::vector<Vect2F> getCorners() const;
+		[[nodiscard]] std::vector<Vec2F> getCorners() const;
 
 		//Collision
-		Collision CheckAABB(const Rect2& other) const;	// ignore rot
-		Collision CheckOBB(const Rect2& other) const;
+		[[nodiscard]] Collision checkAabb(const Rect2& other) const;	// ignore rot
+		[[nodiscard]] Collision checkObb(const Rect2& other) const;
 
-		bool ContainPoint(const Vect2F& point) const;	// ignore rot
+		[[nodiscard]] bool containPoint(const Vec2F& point) const;	// ignore rot
 
-		void DrawDebug(float scale) const; // Draw green points at corners and red point at center
+		void drawDebug(float scale) const; // Draw green points at corners and red point at center
 
-		inline Rect2 toObjectSpace(const Transform2D& transform) const { return { transform.position + center, transform.scale * halfSize, transform.rotation + rotation }; }
+		[[nodiscard]] constexpr Rect2 toObjectSpace(const Transform2D& transform) const { return { transform.position + center, transform.scale * halfSize, transform.rotation + rotation }; }
 		// use the Rect2 offset with the object Transform
 
-		inline Rectangle toRaylib() const { return { center.x - halfSize.x, center.y - halfSize.y, halfSize.x * 2, halfSize.y * 2 }; } // ignore rotation
+		[[nodiscard]] constexpr Rectangle toRaylib() const { return { center.x - halfSize.x, center.y - halfSize.y, halfSize.x * 2, halfSize.y * 2 }; } // ignore rotation
 	
 	};
 
 	//Write and Read Operators
 
-	//Vect2F
-	inline std::ostream& operator<<(std::ostream& os, const Vect2F& v) { os << v.x << " " << v.y; return os; }
-	inline std::istream& operator>>(std::istream& is, Vect2F& v) { is >> v.x >> v.y; return is; }
-	//Vect2I
-	inline std::ostream& operator<<(std::ostream& os, const Vect2I& v) { os << v.x << " " << v.y; return os; }
-	inline std::istream& operator>>(std::istream& is, Vect2I& v) { is >> v.x >> v.y; return is; }
+	//Vec2F
+	inline std::ostream& operator<<(std::ostream& os, const Vec2F& v) { os << v.x << " " << v.y; return os; }
+	inline std::istream& operator>>(std::istream& is, Vec2F& v) { is >> v.x >> v.y; return is; }
+	//Vec2I
+	inline std::ostream& operator<<(std::ostream& os, const Vec2I& v) { os << v.x << " " << v.y; return os; }
+	inline std::istream& operator>>(std::istream& is, Vec2I& v) { is >> v.x >> v.y; return is; }
+	
+	constexpr Vec2F vec2FLerp(const Vec2F a, const Vec2F b, const float t)		{ return { lerp(a.x, b.x, t), lerp(a.y, b.y, t)}; };
+	Vec2F vec2FromRot(float rot);
+
+	float overlapOnAxis(const std::vector<Vec2F>& a,const std::vector<Vec2F>& b, Vec2F axis);
+	
+	Vec2F trigToCoord(float angle, float radius);
+
+	bool pointInCircle(const Vec2F& point, const Vec2F& circleCenter, float circleRadius);
+	
+	inline Vec2F randVec2()										{ return Vec2F{randFloat(-1.0, 1.0f), randFloat(-1.0f, 1.0f)}.normalized(); };
 }
-
-namespace Math {
-
-	template <typename T>
-	inline T Min(T a, T b)										{ return (a <= b) ? a : b; };
-
-	template <typename T>
-	inline T Max(T a, T b)										{ return (a >= b) ? a : b; };
-	
-	template <typename T>
-	inline T Clamp(T value, T min, T max)						{ return Max(Min(value, max), min); };
-	
-	template <typename T>
-	inline T Abs(T value)										{ return (value < 0) ? -value : value; };
-	
-	template <typename T>
-	inline T Sign(T value)										{ return (value > 0) ? T(1) : (value < 0 ? T(-1) : T(0)); };
-
-	template <typename T>
-	inline T Lerp(T a, T b, T t)								{ return a + (b - a) * Clamp(t, T(0), T(1)); };
-
-	using Struct::Vect2F;
-	using Struct::Vect2I;
-
-	inline Vect2F Vect2FLerp(Vect2F a, Vect2F b, float t)		{ return { Lerp(a.x, b.x, t), Lerp(a.y, b.y, t)}; };
-	
-	Vect2F Vect2FromRot(float rot);
-
-	float OverlapOnAxis(const std::vector<Vect2F>& a,const std::vector<Vect2F>& b, Vect2F axis);
-	
-	bool NearlyEqual(const float a, const float b);
-
-	int RandInt(int min, int max);
-
-	float RandFloat(float min, float max);
-	
-	Vect2F trigToCoord(float angle, float radius);
-
-	bool PointInCircle(const Vect2F& point, const Vect2F& circleCenter, float circleRadius);
-	
-	inline Vect2F randVec2()							{ return Vect2F{RandFloat(-1.0, 1.0f), RandFloat(-1.0f, 1.0f)}.normalized(); };
-};
