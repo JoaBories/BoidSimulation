@@ -106,6 +106,7 @@
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\Render2D.cpp" />
     <ClCompile Include="sources\Util.cpp" />
+    <ClCompile Include="sources\Terrain\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sources\BoidSim\BoidGrid.h" />
@@ -118,6 +119,11 @@
     <ClInclude Include="sources\ImageActor.h" />
     <ClInclude Include="sources\Render2D.h" />
     <ClInclude Include="sources\Util.h" />
+    <ClInclude Include="sources\Terrain\Terrain.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\castle.png" />
+    <Image Include="resources\maze.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

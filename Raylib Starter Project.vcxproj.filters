@@ -48,6 +48,9 @@
     <ClCompile Include="sources\BoidSim\BoidGrid.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="sources\Terrain\Terrain.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sources\AssetBank.h">
@@ -80,5 +83,16 @@
     <ClInclude Include="sources\BoidSim\BoidGrid.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="sources\Terrain\Terrain.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\maze.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
+    <Image Include="resources\castle.png">
+      <Filter>Fichiers de ressources</Filter>
+    </Image>
   </ItemGroup>
 </Project>

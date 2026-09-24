@@ -8,7 +8,6 @@ using Struct::Collision;
 
 class Render2D
 {
-
 private:
 	TextureEntry* mTexture;
 
@@ -18,7 +17,6 @@ private:
 	bool isVisible(const Rect2& screenSpaceRect) const;
 
 public:
-
 	Render2D() = default;
 	~Render2D() = default;
 

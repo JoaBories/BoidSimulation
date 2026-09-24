@@ -12,6 +12,8 @@ void Engine::init()
 	time = 0.0f;
 	
 	mBoidManager = new BoidManager(500);
+
+	mTerrain = new Terrain("resources/castle.png");
 }
 
 void Engine::close()
@@ -52,6 +54,7 @@ void Engine::draw() const
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 	
+	mTerrain->draw();
 	mBoidManager->draw();
 	
 	if (!GameActor::actors().empty())
