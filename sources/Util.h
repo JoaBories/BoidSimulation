@@ -27,7 +27,7 @@ namespace Math
 	constexpr T sign(T value) noexcept											{ return (value > 0) ? T(1) : (value < 0 ? T(-1) : T(0)); };
 
 	template <typename T>
-	constexpr T lerp(T a, T b, const float t)	noexcept								{ return a + (b - a) * clamp(t, 0.0f, 1.0f); };
+	constexpr T lerp(T a, T b, const float t)	noexcept						{ return a + (b - a) * clamp(t, 0.0f, 1.0f); };
 	
 	template <typename T>
 	constexpr bool nearlyEqual(const T a, const T b, const T epsilon = static_cast<T>(0.00001f)) noexcept	{ return abs( a - b ) < epsilon; }
@@ -94,7 +94,7 @@ namespace Struct {
 		constexpr bool operator!=(const Vec2& rm) const noexcept	{ return !(*this == rm); }
 		
 		template<typename D>
-		constexpr Vec2<D> to() const { return Vec2<D>(x, y); }
+		constexpr Vec2<D> to() const { return Vec2<D>((D)x, (D)y); }
 
 		//Dot Product
 		[[nodiscard]] constexpr T dot(const Vec2& other) const noexcept		{ return x * other.x + y * other.y; }

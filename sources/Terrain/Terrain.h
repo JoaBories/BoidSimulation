@@ -17,7 +17,7 @@ private:
 	uint32_t mMaxCost;
 	Texture mCostTexture;
 	
-	Vec2I tempDestination;
+	Vec2I mDestination;
 	
 	Vec2I mSize;
 

@@ -13,7 +13,7 @@ void Engine::init()
 	
 	mBoidManager = new BoidManager(0);
 
-	mTerrain = new Terrain("resources/maze.png");
+	mTerrain = new Terrain("resources/castle.png");
 }
 
 void Engine::close()

@@ -63,39 +63,46 @@ void Terrain::loadCostTexture()
 	UnloadImage(img);
 }
 
+typedef std::pair<uint32_t, Vec2I> CellCostPos;
+
+struct cellComp
+{
+	bool operator()(const CellCostPos& a, const CellCostPos& b) const noexcept { return a.first > b.first; }
+};
+
 void Terrain::inverseDijkstra(const Vec2I destination)
 {
-	std::queue<Vec2I> cellsToVisit;
+	std::priority_queue<CellCostPos, std::vector<CellCostPos>, cellComp> cellsToVisit;
 	
 	clearDijkstra();
 	
-	cellsToVisit.push(destination);
+	cellsToVisit.emplace(0, destination);
 	mCostGrid[destination.y][destination.x] = 0;
 	
 	uint32_t currentCost = 0;
 	
 	while (!cellsToVisit.empty())
 	{
-		Vec2I currentCell = cellsToVisit.front();
+		auto [cost, pos] = cellsToVisit.top();
 		cellsToVisit.pop();
 		
-		currentCost = mCostGrid[currentCell.y][currentCell.x];
+		currentCost = cost;
 		
 		for (int x = -1; x < 2; x++)
 		{
-			if (currentCell.x + x < 0 || currentCell.x + x >= mSize.x) continue;
+			if (pos.x + x < 0 || pos.x + x >= mSize.x) continue;
 			
 			for (int y = -1; y < 2; y++)
 			{
 				if (x == 0 && y == 0) continue;
-				if (currentCell.y + y < 0 || currentCell.y + y >= mSize.y) continue;
+				if (pos.y + y < 0 || pos.y + y >= mSize.y) continue;
 
-				const Vec2I newCell = currentCell + Vec2I{ x, y };
-				if (isWalkable(currentCell) && mCostGrid[newCell.y][newCell.x] == 0)
+				const Vec2I newCell = pos + Vec2I{ x, y };
+				if (isWalkable(newCell) && mCostGrid[newCell.y][newCell.x] == 0)
 				{
-					const uint32_t cost = currentCost + (x == 0 || y == 0 ? 2 : 3);
-					mCostGrid[newCell.y][newCell.x] = cost;
-					cellsToVisit.push(newCell);
+					const uint32_t newCost = currentCost + (x == 0 || y == 0 ? 2 : 3);
+					mCostGrid[newCell.y][newCell.x] = newCost;
+					cellsToVisit.emplace(newCost ,newCell);
 				}
 			}
 		}
@@ -119,9 +126,9 @@ void Terrain::update()
 		const Vec2F screenSize{ (float)GetScreenWidth(), (float)GetScreenHeight() };
 		const Vec2F mousePos = GetMousePosition();
 		
-		tempDestination = (mousePos * mSize.to<float>() / screenSize).to<int>();
+		mDestination = (mousePos * mSize.to<float>() / screenSize).to<int>();
 		
-		inverseDijkstra(tempDestination);
+		inverseDijkstra(mDestination);
 	}
 }
 
@@ -139,6 +146,6 @@ void Terrain::draw() const
 		DrawTexturePro(mCostTexture, sourceRect, destRect, {0,0}, 0, WHITE);
 	}
 	
-	Vec2F destinationOnScreen = tempDestination.to<float>() / mSize.to<float>() * screenSize;
+	Vec2F destinationOnScreen = mDestination.to<float>() / mSize.to<float>() * screenSize;
 	DrawCircleV(destinationOnScreen.toRaylib(), 5.0f, RED);
 }
