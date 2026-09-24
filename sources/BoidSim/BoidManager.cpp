@@ -5,6 +5,8 @@
 
 void BoidManager::resolveVelocity()
 {
+    if (mBoidNumber == 0) return;
+    
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         if (mBoidVelocities[i].sqrLength() > mMaxSpeed * mMaxSpeed) mBoidVelocities[i] = mBoidVelocities[i].normalized() * mMaxSpeed;
@@ -14,6 +16,8 @@ void BoidManager::resolveVelocity()
 
 void BoidManager::checkScreenBounds()
 {
+    if (mBoidNumber == 0) return;
+    
     const Vec2F screenBounds(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
@@ -44,6 +48,8 @@ void BoidManager::checkScreenBounds()
 
 void BoidManager::applyRules()
 {
+    if (mBoidNumber == 0) return;
+    
     const float dotProductTreshold = -(mPerceptionAngle / 180.0f - 1.0f);
     const float higherRange = Math::max(mSeparateRange, Math::max(mAlignRange, mGroupRange));
 
@@ -195,26 +201,25 @@ void BoidManager::init()
 void BoidManager::update()
 {
     const auto start = std::chrono::high_resolution_clock::now();
-    
     applyRules();
     resolveVelocity();
-    
-
     checkScreenBounds();
 
-    const auto updateStart = std::chrono::high_resolution_clock::now();
+    const auto gridStart = std::chrono::high_resolution_clock::now();
     mGrid.updateGrid(mBoidPositions);
-    const auto updateEnd = std::chrono::high_resolution_clock::now();
+    const auto gridEnd = std::chrono::high_resolution_clock::now();
     
     const auto end = std::chrono::high_resolution_clock::now();
 
     mLastUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    mLastGridUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart).count();
+    mLastGridUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(gridEnd - gridStart).count();
     mUpdateCount++;
 }
 
 void BoidManager::draw() const
 {
+    if (mBoidNumber == 0) return;
+    
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);

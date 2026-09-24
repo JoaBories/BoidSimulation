@@ -11,9 +11,9 @@ void Engine::init()
 	
 	time = 0.0f;
 	
-	mBoidManager = new BoidManager(500);
+	mBoidManager = new BoidManager(0);
 
-	mTerrain = new Terrain("resources/castle.png");
+	mTerrain = new Terrain("resources/maze.png");
 }
 
 void Engine::close()
@@ -30,6 +30,7 @@ void Engine::close()
 void Engine::update()
 {
 	mBoidManager->update();
+	mTerrain->update();
 	
 	if (!GameActor::actors().empty())
 	{

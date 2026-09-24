@@ -27,7 +27,7 @@ namespace Math
 	constexpr T sign(T value) noexcept											{ return (value > 0) ? T(1) : (value < 0 ? T(-1) : T(0)); };
 
 	template <typename T>
-	constexpr T lerp(T a, T b, T t)	noexcept									{ return a + (b - a) * clamp(t, T(0), T(1)); };
+	constexpr T lerp(T a, T b, const float t)	noexcept								{ return a + (b - a) * clamp(t, 0.0f, 1.0f); };
 	
 	template <typename T>
 	constexpr bool nearlyEqual(const T a, const T b, const T epsilon = static_cast<T>(0.00001f)) noexcept	{ return abs( a - b ) < epsilon; }
@@ -56,7 +56,7 @@ namespace Struct {
 
 		Vec2() = default;
 		constexpr Vec2(T x_, T y_) noexcept :					x{ x_ }, y{ y_ } {}
-		explicit constexpr Vec2(Vector2 vector2_) noexcept :	x{ vector2_.x }, y{ vector2_.y } {}
+		constexpr Vec2(Vector2 vector2_) noexcept :	x{ vector2_.x }, y{ vector2_.y } {}
 
 		//Addition
 		constexpr Vec2 operator+(const Vec2& rm) const noexcept { return { x + rm.x, y + rm.y }; }
@@ -92,6 +92,9 @@ namespace Struct {
 		//Boolean
 		bool operator==(const Vec2& rm) const noexcept { return nearlyEqual(x, rm.x) && nearlyEqual(y, rm.y); }
 		constexpr bool operator!=(const Vec2& rm) const noexcept	{ return !(*this == rm); }
+		
+		template<typename D>
+		constexpr Vec2<D> to() const { return Vec2<D>(x, y); }
 
 		//Dot Product
 		[[nodiscard]] constexpr T dot(const Vec2& other) const noexcept		{ return x * other.x + y * other.y; }
@@ -124,7 +127,7 @@ namespace Struct {
 			return { x / l, y / l };
 		}
 
-		[[nodiscard]] constexpr Vector2 toRaylib() const noexcept		{ return { x, y }; }
+		[[nodiscard]] constexpr Vector2 toRaylib() const noexcept		{ return { (float)x, (float)y }; }
 	};
 	
 	typedef Vec2<float> Vec2F;
@@ -184,11 +187,14 @@ namespace Struct {
 	inline std::istream& operator>>(std::istream& is, Vec2I& v) { is >> v.x >> v.y; return is; }
 	
 	constexpr Vec2F vec2FLerp(const Vec2F a, const Vec2F b, const float t)		{ return { lerp(a.x, b.x, t), lerp(a.y, b.y, t)}; };
+	
 	Vec2F vec2FromRot(float rot);
 
 	float overlapOnAxis(const std::vector<Vec2F>& a,const std::vector<Vec2F>& b, Vec2F axis);
 	
 	Vec2F trigToCoord(float angle, float radius);
+
+	inline Color colorLerp(const Color& a, const Color& b, const float t) { return { lerp(a.r, b.r, t), lerp(a.g, b.g, t), lerp(a.b, b.b, t), 255 }; }
 
 	bool pointInCircle(const Vec2F& point, const Vec2F& circleCenter, float circleRadius);
 	
