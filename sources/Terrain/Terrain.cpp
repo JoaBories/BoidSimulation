@@ -2,31 +2,44 @@
 
 #include <queue>
 
-using Struct::Rect2;
-
-Terrain::Terrain(const std::string& imagePath)
+Terrain::Terrain(const std::string& imagePath) :
+	mCostTexture(), mMaxCost(0)
 {
-	const Image map = LoadImage(imagePath.c_str());
+	Image tempImg = LoadImage(imagePath.c_str());
 	
-	mMap.resize(map.height);
-	for (int y = 0; y < map.height; y++)
+	mSize = {tempImg.width, tempImg.height};
+	mMap.resize(mSize.y);
+	for (int y = 0; y < tempImg.height; y++)
 	{
-		mMap[y].resize(map.width);
-		for (int x = 0; x < map.width; x++)
+		mMap[y].resize(mSize.x);
+		for (int x = 0; x < tempImg.width; x++)
 		{
-			const uint8_t intensity = GetImageColor(map, x, y).r;
+			const uint8_t intensity = GetImageColor(tempImg, x, y).r;
 			mMap[y][x] = intensity;
 		}
 	}
 	
-	mSize = {map.width, map.height};
-	mMapTexture = LoadTextureFromImage(map);
-	UnloadImage(map);
+	mMapTexture = LoadTextureFromImage(tempImg);
+	UnloadImage(tempImg);
+	
+	tempImg = GenImageColor(mSize.x, mSize.y, BLANK);
+	mCostTexture = LoadTextureFromImage(tempImg);
+	UnloadImage(tempImg);
 }
 
-void Terrain::clearDijkstra()
+void Terrain::newDestination(const Vec2I& destination)
 {
-	UnloadTexture(mCostTexture);
+	if (!isWalkable(destination)) return;
+	
+	mDestination = destination;
+	clearCostGrid();
+	rebuildCostGrid();
+	
+	loadCostTexture();
+}
+
+void Terrain::clearCostGrid()
+{
 	mCostGrid.clear();
 	
 	mCostGrid.resize(mSize.y);
@@ -58,49 +71,48 @@ void Terrain::loadCostTexture()
 			ImageDrawPixel(&img, x, y, costColor);
 		}
 	}
-	
-	mCostTexture = LoadTextureFromImage(img);
+
+	UpdateTexture(mCostTexture, img.data);
 	UnloadImage(img);
 }
 
 typedef std::pair<uint32_t, Vec2I> CellCostPos;
 
-struct cellComp
+namespace
 {
-	bool operator()(const CellCostPos& a, const CellCostPos& b) const noexcept { return a.first > b.first; }
-};
+	struct CellComp
+	{
+		bool operator()(const CellCostPos& a, const CellCostPos& b) const noexcept { return a.first > b.first; }
+	};
+}
 
-void Terrain::inverseDijkstra(const Vec2I destination)
+void Terrain::rebuildCostGrid()
 {
-	std::priority_queue<CellCostPos, std::vector<CellCostPos>, cellComp> cellsToVisit;
-	
-	clearDijkstra();
-	
-	cellsToVisit.emplace(0, destination);
-	mCostGrid[destination.y][destination.x] = 0;
-	
+	std::priority_queue<CellCostPos, std::vector<CellCostPos>, CellComp> cellsToVisit;
 	uint32_t currentCost = 0;
+	
+	cellsToVisit.emplace(0, mDestination);
 	
 	while (!cellsToVisit.empty())
 	{
-		auto [cost, pos] = cellsToVisit.top();
+		const auto& [cost, pos] = cellsToVisit.top();
 		cellsToVisit.pop();
 		
 		currentCost = cost;
 		
-		for (int x = -1; x < 2; x++)
+		for (int x = -1; x < 2; x++) // Iterate through all neighbor cells.
 		{
-			if (pos.x + x < 0 || pos.x + x >= mSize.x) continue;
+			if (pos.x + x < 0 || pos.x + x >= mSize.x) continue; // Eliminate cell that aren't in the board.
 			
-			for (int y = -1; y < 2; y++)
+			for (int y = -1; y < 2; y++) // Iterate through all neighbor cells.
 			{
-				if (x == 0 && y == 0) continue;
-				if (pos.y + y < 0 || pos.y + y >= mSize.y) continue;
+				if (x == 0 && y == 0) continue; // Eliminate cell that aren't in the board.
+				if (pos.y + y < 0 || pos.y + y >= mSize.y) continue; // Eliminate in the same cell.
 
-				const Vec2I newCell = pos + Vec2I{ x, y };
-				if (isWalkable(newCell) && mCostGrid[newCell.y][newCell.x] == 0)
+				if (const Vec2I newCell = pos + Vec2I{ x, y }; isWalkable(newCell) && mCostGrid[newCell.y][newCell.x] == 0)
 				{
 					const uint32_t newCost = currentCost + (x == 0 || y == 0 ? 2 : 3);
+					
 					mCostGrid[newCell.y][newCell.x] = newCost;
 					cellsToVisit.emplace(newCost ,newCell);
 				}
@@ -109,26 +121,22 @@ void Terrain::inverseDijkstra(const Vec2I destination)
 	}
 	
 	mMaxCost = currentCost;
-	std::cout << std::to_string(currentCost) << '\n';
-	
-	loadCostTexture();
 }
 
 bool Terrain::isWalkable(const Vec2I& pos, const uint8_t threshold) const
 {
+	if (pos.x < 0 || pos.x >= mSize.x) return false;
+	if (pos.y < 0 || pos.y >= mSize.y) return false;
+	
 	return mMap[pos.y][pos.x] > threshold;
 }
 
 void Terrain::update()
 {
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
 	{
-		const Vec2F screenSize{ (float)GetScreenWidth(), (float)GetScreenHeight() };
-		const Vec2F mousePos = GetMousePosition();
-		
-		mDestination = (mousePos * mSize.to<float>() / screenSize).to<int>();
-		
-		inverseDijkstra(mDestination);
+		mDestination = Vec2I(GetMousePosition()) * mSize / Vec2I{ GetScreenWidth(), GetScreenHeight() };
+		newDestination(mDestination);
 	}
 }
 

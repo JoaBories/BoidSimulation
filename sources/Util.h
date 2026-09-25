@@ -18,16 +18,16 @@ namespace Math
 	constexpr T max(T a, T b) noexcept											{ return a >= b ? a : b; };
 	
 	template <typename T>
-	constexpr T clamp(T value, T minimum, T maximum) noexcept					{ return max(min(value, maximum), minimum); };
+	constexpr T clamp(T value, T minimum, T maximum) noexcept					{ return max(min(value, maximum), minimum); }
 	
 	template <typename T>
-	constexpr T abs(T value) noexcept											{ return (value < 0) ? -value : value; };
+	constexpr T abs(T value) noexcept											{ return (value < 0) ? -value : value; }
 	
 	template <typename T>
-	constexpr T sign(T value) noexcept											{ return (value > 0) ? T(1) : (value < 0 ? T(-1) : T(0)); };
+	constexpr T sign(T value) noexcept											{ return value > 0 ? T(1) : value < 0 ? T(-1) : T(0); }
 
 	template <typename T>
-	constexpr T lerp(T a, T b, const float t)	noexcept						{ return a + (b - a) * clamp(t, 0.0f, 1.0f); };
+	constexpr T lerp(T a, T b, const float t) noexcept							{ return a + (T)((float)(b - a) * clamp(t, 0.0f, 1.0f)); }
 	
 	template <typename T>
 	constexpr bool nearlyEqual(const T a, const T b, const T epsilon = static_cast<T>(0.00001f)) noexcept	{ return abs( a - b ) < epsilon; }
@@ -56,7 +56,7 @@ namespace Struct {
 
 		Vec2() = default;
 		constexpr Vec2(T x_, T y_) noexcept :					x{ x_ }, y{ y_ } {}
-		constexpr Vec2(Vector2 vector2_) noexcept :	x{ vector2_.x }, y{ vector2_.y } {}
+		constexpr Vec2(Vector2 vector2_) noexcept :	x{ (T)vector2_.x }, y{ (T)vector2_.y } {}
 
 		//Addition
 		constexpr Vec2 operator+(const Vec2& rm) const noexcept { return { x + rm.x, y + rm.y }; }

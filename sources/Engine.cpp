@@ -3,7 +3,7 @@
 
 void Engine::init()
 {
-	InitWindow(800, 800, "Boid Simulation");
+	InitWindow(611, 611, "Boid Simulation");
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
@@ -13,7 +13,7 @@ void Engine::init()
 	
 	mBoidManager = new BoidManager(0);
 
-	mTerrain = new Terrain("resources/castle.png");
+	mTerrain = new Terrain("resources/maze.png");
 }
 
 void Engine::close()
