@@ -1,5 +1,6 @@
 #include "Terrain.h"
 
+#include <chrono>
 #include <queue>
 
 Terrain::Terrain(const std::string& imagePath) :
@@ -30,12 +31,24 @@ Terrain::Terrain(const std::string& imagePath) :
 void Terrain::newDestination(const Vec2I& destination)
 {
 	if (!isWalkable(destination)) return;
-	
+
+	const auto dijkstraStart = std::chrono::high_resolution_clock::now();
 	mDestination = destination;
 	clearCostGrid();
 	rebuildCostGrid();
-	
+	const auto dijkstraEnd = std::chrono::high_resolution_clock::now();
+
+	const auto textureStart = std::chrono::high_resolution_clock::now();
 	loadCostTexture();
+	const auto textureEnd = std::chrono::high_resolution_clock::now();
+
+	mTotalDijkstraTime += std::chrono::duration_cast<std::chrono::microseconds>(dijkstraEnd - dijkstraStart).count();
+	const auto textureTime = std::chrono::duration_cast<std::chrono::microseconds>(textureEnd - textureStart).count();
+	mDijkstraNumber++;
+	
+	std::cout << "====" << mDijkstraNumber << "==========================================" << '\n';
+	std::cout << "Average Dijkstra Time : " << std::to_string((float)mTotalDijkstraTime / (float)mDijkstraNumber / 1000.0f) << " ms" << '\n';
+	std::cout << "Texture Time : " << std::to_string((float)textureTime / 1000.0f) << " ms" << '\n';
 }
 
 void Terrain::clearCostGrid()
@@ -49,7 +62,7 @@ void Terrain::clearCostGrid()
 	}
 }
 
-void Terrain::loadCostTexture()
+void Terrain::loadCostTexture() const
 {
 	Image img = GenImageColor(mSize.x, mSize.y, BLANK);
 	
@@ -57,18 +70,10 @@ void Terrain::loadCostTexture()
 	{
 		for (int x = 0; x < mSize.x; x++)
 		{
-			Color costColor;
+			if (mCostGrid[y][x] == 0) continue; // Not visited leave blank
 			
-			if (mCostGrid[y][x] == 0)
-			{
-				costColor = BLANK;
-			}
-			else
-			{
-				const float t = (float)mCostGrid[y][x] / (float)mMaxCost;
-				costColor = Struct::colorLerp(GREEN, RED, t);
-			}
-			ImageDrawPixel(&img, x, y, costColor);
+			const float t = (float)mCostGrid[y][x] / (float)mMaxCost;
+			ImageDrawPixel(&img, x, y, Struct::colorLerp(YELLOW, RED, t));
 		}
 	}
 
@@ -153,7 +158,7 @@ void Terrain::draw() const
 	{
 		DrawTexturePro(mCostTexture, sourceRect, destRect, {0,0}, 0, WHITE);
 	}
-	
-	Vec2F destinationOnScreen = mDestination.to<float>() / mSize.to<float>() * screenSize;
+
+	const Vec2F destinationOnScreen = mDestination.to<float>() / mSize.to<float>() * screenSize;
 	DrawCircleV(destinationOnScreen.toRaylib(), 5.0f, RED);
 }

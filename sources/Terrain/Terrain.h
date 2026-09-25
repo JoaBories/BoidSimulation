@@ -18,8 +18,11 @@ private:
 	Vec2I mSize;
 	uint32_t mMaxCost;
 	
+	uint64_t mTotalDijkstraTime;
+	uint32_t mDijkstraNumber;
+	
 	void clearCostGrid();
-	void loadCostTexture();
+	void loadCostTexture() const;
 	void rebuildCostGrid();
 
 public:
@@ -28,6 +31,8 @@ public:
 	void newDestination(const Vec2I& destination);
 	
 	[[nodiscard]] bool isWalkable(const Vec2I& pos, uint8_t threshold = 128) const;
+	
+	Vec2I getSize() const { return mSize; }
 	
 	void update();
 	void draw() const;
