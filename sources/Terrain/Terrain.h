@@ -10,12 +10,16 @@ using Struct::Vec2I;
 class Terrain
 {
 private:
-	std::vector<std::vector<uint32_t>> mCostGrid;
-	std::vector<std::vector<uint8_t>> mMap;
-	Texture mMapTexture;
+	std::vector<uint32_t> mCostGrid; // y major
 	Texture mCostTexture;
-	Vec2I mDestination;
+	
+	std::vector<uint8_t> mMap; // y major
+	Texture mMapTexture;
+	
 	Vec2I mSize;
+	size_t mItSize;
+	
+	Vec2I mDestination;
 	uint32_t mMaxCost;
 	
 	uint64_t mTotalDijkstraTime;
@@ -25,12 +29,16 @@ private:
 	void loadCostTexture() const;
 	void rebuildCostGrid();
 
+	[[nodiscard]] constexpr uint64_t getIteratorFromPos(const Vec2I& pos) const { return pos.y * mSize.x + pos.x; }
+	[[nodiscard]] constexpr Vec2I getPosFromIterator(uint64_t iterator) const { return Vec2I{ (int)iterator % mSize.y, (int)iterator / mSize.y }; }
+
 public:
 	explicit Terrain(const std::string& imagePath);
 	
 	void newDestination(const Vec2I& destination);
 	
 	[[nodiscard]] bool isWalkable(const Vec2I& pos, uint8_t threshold = 128) const;
+	[[nodiscard]] bool isWalkable(uint64_t it, uint8_t threshold = 128) const;
 	
 	Vec2I getSize() const { return mSize; }
 	

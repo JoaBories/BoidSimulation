@@ -9,15 +9,14 @@ Terrain::Terrain(const std::string& imagePath) :
 	Image tempImg = LoadImage(imagePath.c_str());
 	
 	mSize = {tempImg.width, tempImg.height};
-	mMap.resize(mSize.y);
-	for (int y = 0; y < tempImg.height; y++)
+	mItSize = (size_t)mSize.x * mSize.y;
+	
+	mMap.resize(mItSize);
+	for (size_t it = 0; it < mItSize; it++)
 	{
-		mMap[y].resize(mSize.x);
-		for (int x = 0; x < tempImg.width; x++)
-		{
-			const uint8_t intensity = GetImageColor(tempImg, x, y).r;
-			mMap[y][x] = intensity;
-		}
+		const Vec2I pos = getPosFromIterator(it);
+		const uint8_t intensity = GetImageColor(tempImg, pos.x, pos.y).r;
+		mMap[it] = intensity;
 	}
 	
 	mMapTexture = LoadTextureFromImage(tempImg);
@@ -26,6 +25,7 @@ Terrain::Terrain(const std::string& imagePath) :
 	tempImg = GenImageColor(mSize.x, mSize.y, BLANK);
 	mCostTexture = LoadTextureFromImage(tempImg);
 	UnloadImage(tempImg);
+	
 }
 
 void Terrain::newDestination(const Vec2I& destination)
@@ -54,27 +54,20 @@ void Terrain::newDestination(const Vec2I& destination)
 void Terrain::clearCostGrid()
 {
 	mCostGrid.clear();
-	
-	mCostGrid.resize(mSize.y);
-	for (int y = 0; y < mSize.y; y++)
-	{
-		mCostGrid[y].resize(mSize.x);
-	}
+	mCostGrid.resize(mItSize);
 }
 
 void Terrain::loadCostTexture() const
 {
 	Image img = GenImageColor(mSize.x, mSize.y, BLANK);
 	
-	for (int y = 0; y < mSize.y; y++)
+	for (size_t it = 0; it < mItSize; it++)
 	{
-		for (int x = 0; x < mSize.x; x++)
-		{
-			if (mCostGrid[y][x] == 0) continue; // Not visited leave blank
-			
-			const float t = (float)mCostGrid[y][x] / (float)mMaxCost;
-			ImageDrawPixel(&img, x, y, Struct::colorLerp(YELLOW, RED, t));
-		}
+		if (mCostGrid[it] == 0) continue; // Not visited leave blank
+		
+		const Vec2I pos = getPosFromIterator(it);
+		const float t = (float)mCostGrid[it] / (float)mMaxCost;
+		ImageDrawPixel(&img, pos.x, pos.y, Struct::colorLerp(YELLOW, RED, t));
 	}
 
 	UpdateTexture(mCostTexture, img.data);
@@ -94,13 +87,14 @@ namespace
 void Terrain::rebuildCostGrid()
 {
 	std::priority_queue<CellCostPos, std::vector<CellCostPos>, CellComp> cellsToVisit;
-	uint32_t currentCost = 0;
+	uint32_t currentCost = 1;
 	
-	cellsToVisit.emplace(0, mDestination);
+	mCostGrid[getIteratorFromPos(mDestination)] = currentCost;
+	cellsToVisit.emplace(currentCost, mDestination);
 	
 	while (!cellsToVisit.empty())
 	{
-		const auto& [cost, pos] = cellsToVisit.top();
+		auto [cost, pos] = cellsToVisit.top();
 		cellsToVisit.pop();
 		
 		currentCost = cost;
@@ -114,11 +108,11 @@ void Terrain::rebuildCostGrid()
 				if (x == 0 && y == 0) continue; // Eliminate cell that aren't in the board.
 				if (pos.y + y < 0 || pos.y + y >= mSize.y) continue; // Eliminate in the same cell.
 
-				if (const Vec2I newCell = pos + Vec2I{ x, y }; isWalkable(newCell) && mCostGrid[newCell.y][newCell.x] == 0)
+				if (const Vec2I newCell = pos + Vec2I{ x, y }; isWalkable(newCell) && mCostGrid[getIteratorFromPos(newCell)] == 0)
 				{
 					const uint32_t newCost = currentCost + (x == 0 || y == 0 ? 2 : 3);
 					
-					mCostGrid[newCell.y][newCell.x] = newCost;
+					mCostGrid[getIteratorFromPos(newCell)] = newCost;
 					cellsToVisit.emplace(newCost ,newCell);
 				}
 			}
@@ -133,7 +127,13 @@ bool Terrain::isWalkable(const Vec2I& pos, const uint8_t threshold) const
 	if (pos.x < 0 || pos.x >= mSize.x) return false;
 	if (pos.y < 0 || pos.y >= mSize.y) return false;
 	
-	return mMap[pos.y][pos.x] > threshold;
+	return mMap[getIteratorFromPos(pos)] > threshold;
+}
+
+bool Terrain::isWalkable(const uint64_t it, uint8_t threshold) const
+{
+	if (it < mItSize) return mMap[it];
+	return false;
 }
 
 void Terrain::update()

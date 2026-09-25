@@ -33,10 +33,12 @@ Optimizations are cumulative.
 | Use of noexcept and constexpr | 1.34ms / 2.68µs | 0.21ms / 0.42µs |
 
 ### Mesured Dijkstra time
-Dijkstra time is mesured using ``` breeze_1024.png ``` and ``` breeze_2048.png ``` as map. 
-Averaging 100 iterations over random destinations.
+Dijkstra time is mesured using ``` breeze_1024.png ``` and ``` breeze_2048.png ``` as map.
+Averaging 100 iterations over random destinations. Every test is in release build.
 Optimizations are cumulative.
 
-| Dijkstra Optimizations                | 1024x1024 | 2048x2048 |
-|---------------------------------------|-----------|-----------|
-| Baseline (naive using priority_queue) | 19.0ms    | 81.6ms    |
+| Dijkstra Optimizations                     | 1024x1024 | 2048x2048 |
+|--------------------------------------------|-----------|-----------|
+| Baseline (naive using priority_queue)      | 19.0ms    | 81.6ms    |
+| Flattened 2D array (for cost grid and map) | 16.9ms    | 75.8ms    |
+| Small changes                              | 16.4ms    | 74.5ms    |
