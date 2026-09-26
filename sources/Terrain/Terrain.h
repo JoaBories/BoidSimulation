@@ -10,8 +10,9 @@ using Struct::Vec2I;
 class Terrain
 {
 private:
+	std::vector<Vec2F> mFlowField; // y major
 	std::vector<uint32_t> mCostGrid; // y major
-	Texture mCostTexture;
+	Texture mDebugTexture;
 	
 	std::vector<uint8_t> mMap; // y major
 	Texture mMapTexture;
@@ -25,15 +26,19 @@ private:
 	uint64_t mTotalDijkstraTime;
 	uint32_t mDijkstraNumber;
 	
-	void clearCostGrid();
 	void loadCostTexture() const;
-	void rebuildCostGrid();
+	void buildCostGrid();
+	
+	void buildFlowField();
+	void loadFlowFieldTexture() const;
 
 	[[nodiscard]] constexpr uint64_t getIteratorFromPos(const Vec2I& pos) const { return pos.y * mSize.x + pos.x; }
 	[[nodiscard]] constexpr Vec2I getPosFromIterator(uint64_t iterator) const { return Vec2I{ (int)iterator % mSize.y, (int)iterator / mSize.y }; }
 
 public:
 	explicit Terrain(const std::string& imagePath);
+	
+	void bench(uint32_t tryNumber);
 	
 	void newDestination(const Vec2I& destination);
 	

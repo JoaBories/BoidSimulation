@@ -13,18 +13,9 @@ void Engine::init()
 	
 	mBoidManager = new BoidManager(0);
 
-	mTerrain = new Terrain("resources/breeze_2048.png");
+	mTerrain = new Terrain("resources/breeze_1024.png");
 	
-	Vec2I terrainSize = mTerrain->getSize();
-	for (int i = 0; i < 100; i++)
-	{
-		Vec2I randomPos;
-		do {
-			randomPos = Vec2I(Math::randInt(0, terrainSize.x), Math::randInt(0, terrainSize.y));
-		} while (!mTerrain->isWalkable(randomPos));
-		
-		mTerrain->newDestination(randomPos);		
-	}
+	//mTerrain->bench(50);
 }
 
 void Engine::close()
