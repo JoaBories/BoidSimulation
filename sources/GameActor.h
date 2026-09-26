@@ -1,8 +1,6 @@
 #pragma once
 
-#include "GlobalVariables.h"
 #include "AssetBank.h"
-using Struct::Transform2D;
 
 enum Tag
 {

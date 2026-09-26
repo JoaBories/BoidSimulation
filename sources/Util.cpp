@@ -1,20 +1,15 @@
 #include "Util.h"
 #include <random>
 
-using Struct::Vec2F;
-using Struct::Vec2I;
-using Struct::Rect2;
-using Struct::Collision;
-
 #pragma region MathUtils
 
-Vec2F Struct::vec2FromRot(const float rot)
+Vec2F vec2FromRot(const float rot)
 {
 	const Vec2F vector = { cosf(rot * DEG2RAD), sinf(rot * DEG2RAD) };
 	return vector.normalized();
 }
 
-float Struct::overlapOnAxis(const std::vector<Vec2F>& a, const std::vector<Vec2F>& b, const Vec2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
+float overlapOnAxis(const std::vector<Vec2F>& a, const std::vector<Vec2F>& b, const Vec2F axis) // Check if two polygons (list of points) are overlaping on a certain axis | return overlap : negative -> false / positive -> true
 {
 	float aMin = FLT_MAX, aMax = -FLT_MAX;
 	float bMin = FLT_MAX, bMax = -FLT_MAX;
@@ -22,18 +17,18 @@ float Struct::overlapOnAxis(const std::vector<Vec2F>& a, const std::vector<Vec2F
 	for (const auto& point : a) 
 	{
 		const float projection = point.dot(axis);
-		aMin = min(projection, aMin);
-		aMax = max(projection, aMax);
+		aMin = Math::min(projection, aMin);
+		aMax = Math::max(projection, aMax);
 	}
 
 	for (const auto& point : b)
 	{
 		const float projection = point.dot(axis);
-		bMin = min(projection, bMin);
-		bMax = max(projection, bMax);
+		bMin = Math::min(projection, bMin);
+		bMax = Math::max(projection, bMax);
 	}
 
-	return min(aMax, bMax) - max(aMin, bMin);
+	return Math::min(aMax, bMax) - Math::max(aMin, bMin);
 }
 
 int Math::randInt(const int min, const int max)
@@ -50,14 +45,14 @@ float Math::randFloat(const float min, const float max)
 	return min + random * (max - min);
 }
 
-Vec2F Struct::trigToCoord(const float angle, const float radius)
+Vec2F trigToCoord(const float angle, const float radius)
 {
 	float x = radius * cos(angle);
 	float y = radius * sin(angle);
 	return { x,y };
 }
 
-bool Struct::pointInCircle(const Vec2F& point, const Vec2F& circleCenter, float circleRadius)
+bool pointInCircle(const Vec2F& point, const Vec2F& circleCenter, float circleRadius)
 {
 	const Vec2F distance = point - circleCenter;
 	return distance.sqrLength() <= circleRadius * circleRadius;
@@ -189,7 +184,7 @@ Collision Rect2::checkObb(const Rect2& other) const
 
 		for (const auto& axis : axes)									// Testing overlap on all axes. If there is overlap on all of them then there is collision
 		{
-			if (const float overlap = Struct::overlapOnAxis(aCorners, bCorners, axis); overlap < 0)
+			if (const float overlap = overlapOnAxis(aCorners, bCorners, axis); overlap < 0)
 			{
 				return result;
 			}

@@ -9,13 +9,11 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	time = 0.0f;
-	
 	mBoidManager = new BoidManager(0);
 
-	mTerrain = new Terrain("resources/breeze_1024.png");
 	
-	//mTerrain->bench(50);
+	mTerrain = new Terrain("resources/breeze_1024.png");
+	mTerrain->bench(1000);
 }
 
 void Engine::close()
@@ -40,13 +38,6 @@ void Engine::update()
 		{
 			if (actor->IsActive()) actor->Update();
 		}
-	}
-	
-	time += GetFrameTime();
-	if (time >= 60.0f)
-	{
-		mBoidManager->logAverageUpdate();
-		time = 0.0f;
 	}
 
 	GameActor::killPendingsActors();

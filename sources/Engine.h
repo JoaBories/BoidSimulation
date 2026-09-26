@@ -10,8 +10,6 @@ private :
 	AssetBank* mAssetBank;
 	BoidManager* mBoidManager;
 	Terrain* mTerrain;
-	
-	float time;
 
 public :
 	Engine() = default;

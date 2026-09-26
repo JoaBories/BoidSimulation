@@ -13,28 +13,6 @@ Rect2 Render2D::toScreenSpace(const Rect2& actorSpaceRect) const
 	return textureToScreen;
 }
 
-bool Render2D::isVisible(const Rect2& screenSpaceRect) const
-{
-	if (!GlobalVariables::TextureCulling)
-	{
-		return true;
-	}
-
-	std::vector<Vec2F> corners = screenSpaceRect.getCorners();
-
-	Rect2 camSpace = Cam2D::GetInstance()->GetSafeCamSpace();
-
-	for (const auto& corner : corners)
-	{
-		if (camSpace.containPoint(corner))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 Render2D::Render2D(const Rect2& textureSpace):
 	mTexture{ nullptr },
 	mTextureSpace{ textureSpace }
@@ -65,21 +43,16 @@ bool Render2D::ShouldBeDrawn(const Transform2D& gameActorTransform) const
 {
 	Rect2 actorSpace = mTextureSpace.toObjectSpace(gameActorTransform);
 	Rect2 screenSpace = toScreenSpace(actorSpace);
-
-	return isVisible(screenSpace);
 }
 
 void Render2D::Draw(const Transform2D& gameActorTransform) const
 {
 	Rect2 actorSpace = mTextureSpace.toObjectSpace(gameActorTransform);
 	Rect2 screenSpace = toScreenSpace(actorSpace);
-
-	if (isVisible(screenSpace))
-	{
-		Texture text = *mTexture->pTexture;
-		Rectangle sourceRect = { 0,0, (float)text.width, (float)text.height };
-		Rectangle destRect = { screenSpace.center.x, screenSpace.center.y, screenSpace.halfSize.x * 2.0f, screenSpace.halfSize.y * 2.0f }; //actorSpace.toRaylib();
-		
-		DrawTexturePro(text, sourceRect, destRect, screenSpace.halfSize.toRaylib(), screenSpace.rotation, WHITE);
-	}
+	
+	Texture text = *mTexture->pTexture;
+	Rectangle sourceRect = { 0,0, (float)text.width, (float)text.height };
+	Rectangle destRect = { screenSpace.center.x, screenSpace.center.y, screenSpace.halfSize.x * 2.0f, screenSpace.halfSize.y * 2.0f }; //actorSpace.toRaylib();
+	
+	DrawTexturePro(text, sourceRect, destRect, screenSpace.halfSize.toRaylib(), screenSpace.rotation, WHITE);
 }

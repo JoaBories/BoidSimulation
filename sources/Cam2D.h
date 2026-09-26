@@ -1,7 +1,6 @@
 #pragma once
 
-#include "GlobalVariables.h"
-using Struct::Rect2;
+#include "Util.h"
 
 class Cam2D
 {
@@ -24,7 +23,6 @@ public:
 	inline void SetPosition(Vec2F pos) { mPosition = pos; }
 
 	Rect2 GetCamSpace() const;		//Rect2 of what the camera sees
-	Rect2 GetSafeCamSpace() const;  //More wider rect for occlusion
 
 	inline static Cam2D* GetInstance() {
 		if (!instance) instance = new Cam2D(); return instance; }

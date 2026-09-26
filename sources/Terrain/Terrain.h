@@ -1,24 +1,19 @@
 #pragma once
 
 #include "Util.h"
-#include <vector>
-#include <string>
 
-using Struct::Vec2F;
-using Struct::Vec2I;
+#include <string>
+#include "Grid2D.h"
 
 class Terrain
 {
 private:
-	std::vector<Vec2F> mFlowField; // y major
-	std::vector<uint32_t> mCostGrid; // y major
-	Texture mDebugTexture;
+	Grid2D<Vec2F> mFlowField; // y major
+	Grid2D<uint16_t> mCostGrid; // y major
+	Grid2D<uint8_t> mMap; // y major
 	
-	std::vector<uint8_t> mMap; // y major
 	Texture mMapTexture;
-	
-	Vec2I mSize;
-	size_t mItSize;
+	Texture mDebugTexture;
 	
 	Vec2I mDestination;
 	uint32_t mMaxCost;
@@ -26,14 +21,11 @@ private:
 	uint64_t mTotalDijkstraTime;
 	uint32_t mDijkstraNumber;
 	
-	void loadCostTexture() const;
 	void buildCostGrid();
+	void loadCostTexture() const;
 	
 	void buildFlowField();
 	void loadFlowFieldTexture() const;
-
-	[[nodiscard]] constexpr uint64_t getIteratorFromPos(const Vec2I& pos) const { return pos.y * mSize.x + pos.x; }
-	[[nodiscard]] constexpr Vec2I getPosFromIterator(uint64_t iterator) const { return Vec2I{ (int)iterator % mSize.y, (int)iterator / mSize.y }; }
 
 public:
 	explicit Terrain(const std::string& imagePath);
@@ -43,9 +35,9 @@ public:
 	void newDestination(const Vec2I& destination);
 	
 	[[nodiscard]] bool isWalkable(const Vec2I& pos, uint8_t threshold = 128) const;
-	[[nodiscard]] bool isWalkable(uint64_t it, uint8_t threshold = 128) const;
-	
-	Vec2I getSize() const { return mSize; }
+	[[nodiscard]] bool isWalkable(const uint64_t& it, uint8_t threshold = 128) const;
+
+	[[nodiscard]] Vec2I getSize() const { return mMap.getSize(); }
 	
 	void update();
 	void draw() const;
