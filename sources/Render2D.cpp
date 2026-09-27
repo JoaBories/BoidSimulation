@@ -39,12 +39,6 @@ Rect2 Render2D::GetTextureSpace() const
 	return mTextureSpace;
 }
 
-bool Render2D::ShouldBeDrawn(const Transform2D& gameActorTransform) const
-{
-	Rect2 actorSpace = mTextureSpace.toObjectSpace(gameActorTransform);
-	Rect2 screenSpace = toScreenSpace(actorSpace);
-}
-
 void Render2D::Draw(const Transform2D& gameActorTransform) const
 {
 	Rect2 actorSpace = mTextureSpace.toObjectSpace(gameActorTransform);

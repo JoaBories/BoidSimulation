@@ -1,24 +1,25 @@
 #pragma once
 
-#include <array>
-#include <vector>
-
 #include <Util.h>
-
-constexpr int GRID_SIZE = 10;
+#include "Terrain/Grid2D.h"
 
 class BoidGrid
 {
 private:
-	std::array<std::array<std::vector<int>, GRID_SIZE>, GRID_SIZE> mGrid;
+	Grid2D<std::vector<int>> mGrid;
+	Vec2I mGridSize;
+	Vec2F mCellSize;
 
 public:
-	BoidGrid();
+	explicit BoidGrid(const Vec2I& gridSize);
+	
+	void resize(const Vec2I& gridSize);
 
 	void updateGrid(const std::vector<Vec2F>& boidPositions);
 
 	[[nodiscard]] const std::vector<int>& getNeighbors(const Vec2I& gridPosition) const;
 
 	[[nodiscard]] Vec2I getGridPos(const Vec2F& position) const;
-	[[nodiscard]] Vec2F getGridSize() const;
+	[[nodiscard]] const Vec2F& getCellSize() const { return mCellSize; }
+	[[nodiscard]] const Vec2I& getGridSize() const { return mGridSize; }
 };

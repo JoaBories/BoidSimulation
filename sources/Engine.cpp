@@ -9,11 +9,9 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(0);
-
+	mBoidManager = new BoidManager(1000);
 	
-	mTerrain = new Terrain("resources/breeze_1024.png");
-	mTerrain->bench(1000);
+	//mTerrain = new Terrain("resources/breeze_1024.png");
 }
 
 void Engine::close()
@@ -30,7 +28,7 @@ void Engine::close()
 void Engine::update()
 {
 	mBoidManager->update();
-	mTerrain->update();
+	//mTerrain->update();
 	
 	if (!GameActor::actors().empty())
 	{
@@ -48,7 +46,7 @@ void Engine::draw() const
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 	
-	mTerrain->draw();
+	//mTerrain->draw();
 	mBoidManager->draw();
 	
 	if (!GameActor::actors().empty())

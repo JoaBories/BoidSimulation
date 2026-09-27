@@ -24,8 +24,6 @@ public:
 	void ChangeTextureSpace(const Rect2& textureSpace);
 
 	Rect2 GetTextureSpace() const;
-
-	bool ShouldBeDrawn(const Transform2D& gameActorTransform) const;
 	void Draw(const Transform2D& gameActorTransform) const;
 };
 
