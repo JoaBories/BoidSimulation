@@ -4,8 +4,6 @@
 #include <vector>
 
 #include <Util.h>
-using Struct::Vec2F;
-using Struct::Vec2I;
 
 constexpr int GRID_SIZE = 10;
 

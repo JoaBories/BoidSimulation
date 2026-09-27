@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoidSim/BoidManager.h"
+#include "Terrain/Terrain.h"
 #include "AssetBank.h"
 
 class Engine
@@ -8,8 +9,7 @@ class Engine
 private :
 	AssetBank* mAssetBank;
 	BoidManager* mBoidManager;
-	
-	float time;
+	Terrain* mTerrain;
 
 public :
 	Engine() = default;

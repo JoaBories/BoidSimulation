@@ -1,11 +1,9 @@
 #pragma once
 
 #include "Util.h"
-using Struct::Vec2I;
 
 #include <string>
 #include <unordered_map>
-#include <map>
 
 #include <filesystem>
 

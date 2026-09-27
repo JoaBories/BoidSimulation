@@ -5,15 +5,19 @@
 
 void BoidManager::resolveVelocity()
 {
+    if (mBoidNumber == 0) return;
+    
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        if (mBoidVelocities[i].sqrLength() > mMaxSpeed * mMaxSpeed) mBoidVelocities[i] = mBoidVelocities[i].normalized() * mMaxSpeed;
+        if (mBoidVelocities[i].sqrLength() > MAX_SPEED * MAX_SPEED) mBoidVelocities[i] = mBoidVelocities[i].normalized() * MAX_SPEED;
         mBoidPositions[i] += mBoidVelocities[i] * GetFrameTime();
     }
 }
 
 void BoidManager::checkScreenBounds()
 {
+    if (mBoidNumber == 0) return;
+    
     const Vec2F screenBounds(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
@@ -44,8 +48,10 @@ void BoidManager::checkScreenBounds()
 
 void BoidManager::applyRules()
 {
-    const float dotProductTreshold = -(mPerceptionAngle / 180.0f - 1.0f);
-    const float higherRange = Math::max(mSeparateRange, Math::max(mAlignRange, mGroupRange));
+    if (mBoidNumber == 0) return;
+    
+    const float dotProductTreshold = -(PERCEPTION_ANGLE / 180.0f - 1.0f);
+    const float higherRange = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, GROUP_RANGE));
 
     const int stepX = (int)std::ceil(higherRange / mGrid.getGridSize().x);
     const int stepY = (int)std::ceil(higherRange / mGrid.getGridSize().y);
@@ -87,18 +93,18 @@ void BoidManager::applyRules()
                         continue;
                     }
 
-                    if (distanceSquared <= mSeparateRange * mSeparateRange)
+                    if (distanceSquared <= SEPARATE_RANGE * SEPARATE_RANGE)
                     {
                         separate += -distance / distanceSquared;
                     }
 
-                    if (distanceSquared <= mAlignRange * mAlignRange)
+                    if (distanceSquared <= ALIGN_RANGE * ALIGN_RANGE)
                     {
                         alignSum += mBoidVelocities[j];
                         alignCount++;
                     }
 
-                    if (distanceSquared <= mGroupRange * mGroupRange)
+                    if (distanceSquared <= GROUP_RANGE * GROUP_RANGE)
                     {
                         groupSum += mBoidPositions[j];
                         groupCount++;
@@ -113,7 +119,7 @@ void BoidManager::applyRules()
         if (alignCount)
         {
             alignSum /= static_cast<float>(alignCount);
-            align = alignSum.normalized() * mMaxSpeed;
+            align = alignSum.normalized() * MAX_SPEED;
         }
         
         Vec2F group { 0.0f, 0.0f };
@@ -123,7 +129,7 @@ void BoidManager::applyRules()
             group = (groupSum - mBoidPositions[i]).normalized();
         }
         
-        Vec2F force = separate * mBoidWeights[i].separate + align * mBoidWeights[i].align + group * mBoidWeights[i].group;
+        Vec2F force = separate * BOID_WEIGHTS.separate + align * BOID_WEIGHTS.align + group * BOID_WEIGHTS.group;
         mBoidVelocities[i] += force * GetFrameTime();
     }
 }
@@ -132,14 +138,14 @@ void BoidManager::drawDebug(const uint32_t boidIndex) const
 {
     DrawLineEx(mBoidPositions[boidIndex].toRaylib(), (mBoidPositions[boidIndex] + mBoidVelocities[boidIndex] * 1).toRaylib(), 1.0f, GREEN);
 
-    const float perceptionEdgeR = mBoidVelocities[boidIndex].getRot() - mPerceptionAngle / 2;
-    const float perceptionEdgeL = mBoidVelocities[boidIndex].getRot() + mPerceptionAngle / 2;
+    const float perceptionEdgeR = mBoidVelocities[boidIndex].getRot() - PERCEPTION_ANGLE / 2;
+    const float perceptionEdgeL = mBoidVelocities[boidIndex].getRot() + PERCEPTION_ANGLE / 2;
     
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mGroupRange, perceptionEdgeR, perceptionEdgeL, 10, PINK);
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mAlignRange, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), mSeparateRange, perceptionEdgeR, perceptionEdgeL, 10, RED);
+    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), GROUP_RANGE, perceptionEdgeR, perceptionEdgeL, 10, PINK);
+    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), ALIGN_RANGE, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
+    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
 
-    const float higherRange = Math::max(mSeparateRange, Math::max(mAlignRange, mGroupRange));
+    const float higherRange = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, GROUP_RANGE));
     const int stepX = (int)std::ceil(higherRange / mGrid.getGridSize().x);
     const int stepY = (int)std::ceil(higherRange / mGrid.getGridSize().y);
 
@@ -182,39 +188,36 @@ void BoidManager::init()
     
     mBoidPositions.reserve(mBoidNumber);
     mBoidVelocities.reserve(mBoidNumber);
-    mBoidWeights.reserve(mBoidNumber);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         mBoidPositions.emplace_back(Math::randFloat(0, screenBounds.x), Math::randFloat(0, screenBounds.y));
-        mBoidVelocities.emplace_back(Struct::randVec2() * mMaxSpeed);
-        mBoidWeights.emplace_back(mDefaultWeights);
+        mBoidVelocities.emplace_back(randVec2() * MAX_SPEED);
     }
 }
 
 void BoidManager::update()
 {
     const auto start = std::chrono::high_resolution_clock::now();
-    
     applyRules();
     resolveVelocity();
-    
-
     checkScreenBounds();
 
-    const auto updateStart = std::chrono::high_resolution_clock::now();
+    const auto gridStart = std::chrono::high_resolution_clock::now();
     mGrid.updateGrid(mBoidPositions);
-    const auto updateEnd = std::chrono::high_resolution_clock::now();
+    const auto gridEnd = std::chrono::high_resolution_clock::now();
     
     const auto end = std::chrono::high_resolution_clock::now();
 
     mLastUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    mLastGridUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(updateEnd - updateStart).count();
+    mLastGridUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(gridEnd - gridStart).count();
     mUpdateCount++;
 }
 
 void BoidManager::draw() const
 {
+    if (mBoidNumber == 0) return;
+    
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);

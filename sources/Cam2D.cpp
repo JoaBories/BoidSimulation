@@ -15,11 +15,3 @@ Rect2 Cam2D::GetCamSpace() const
 
     return camSpace;
 }
-
-Rect2 Cam2D::GetSafeCamSpace() const
-{
-    Rect2 safeCamSpace = GetCamSpace();
-    safeCamSpace.halfSize *= GlobalVariables::CullingSizeMultiplier;
-
-    return safeCamSpace;
-}

@@ -8,12 +8,18 @@ struct BoidWeights
     float group;
 };
 
+constexpr BoidWeights BOID_WEIGHTS = {10.0f, 1.0f, 0.5f};
+constexpr float SEPARATE_RANGE = 30.0f;
+constexpr float ALIGN_RANGE = 50.0f;
+constexpr float GROUP_RANGE = 80.0f;
+constexpr float PERCEPTION_ANGLE = 270.0f;
+constexpr float MAX_SPEED = 50.0f;
+
 class BoidManager
 {
 private:
     std::vector<Vec2F> mBoidPositions;
     std::vector<Vec2F> mBoidVelocities;
-    std::vector<BoidWeights> mBoidWeights;
     uint32_t mBoidNumber;
 
     BoidGrid mGrid;
@@ -21,13 +27,6 @@ private:
     uint64_t mLastUpdateTime;
     uint64_t mLastGridUpdateTime;
     uint64_t mUpdateCount;
-    
-    BoidWeights mDefaultWeights = {10.0f, 0.5f, 2.0f};
-    float mSeparateRange = 40.0f;
-    float mAlignRange = 50.0f;
-    float mGroupRange = 70.0f;
-    float mPerceptionAngle = 180.0f;
-    float mMaxSpeed = 50.0f;
     
     void resolveVelocity();
     void checkScreenBounds();
