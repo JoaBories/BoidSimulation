@@ -3,15 +3,17 @@
 
 void Engine::init()
 {
-	InitWindow(800, 800, "Boid Simulation");
+	SetConfigFlags(FLAG_WINDOW_UNDECORATED);
+	InitWindow(900, 900, "Boid Simulation");
+	
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(1000);
+	mBoidManager = new BoidManager(100);
 	
-	//mTerrain = new Terrain("resources/breeze_1024.png");
+	mTerrain = new Terrain("resources/breeze_1024.png");
 }
 
 void Engine::close()
@@ -23,6 +25,9 @@ void Engine::close()
 	
 	delete mBoidManager;
 	mBoidManager = nullptr;
+	
+	delete mTerrain;
+	mTerrain = nullptr;
 }
 
 void Engine::update()
@@ -44,7 +49,7 @@ void Engine::update()
 void Engine::draw() const
 {
 	BeginDrawing();
-	ClearBackground(RAYWHITE);
+	ClearBackground({ 20, 20, 20, 255 });
 	
 	//mTerrain->draw();
 	mBoidManager->draw();

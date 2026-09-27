@@ -9,6 +9,8 @@ private:
 	Grid2D<std::vector<int>> mGrid;
 	Vec2I mGridSize;
 	Vec2F mCellSize;
+	
+	uint32_t mMaxDensity;
 
 public:
 	explicit BoidGrid(const Vec2I& gridSize);
@@ -22,4 +24,6 @@ public:
 	[[nodiscard]] Vec2I getGridPos(const Vec2F& position) const;
 	[[nodiscard]] const Vec2F& getCellSize() const { return mCellSize; }
 	[[nodiscard]] const Vec2I& getGridSize() const { return mGridSize; }
+	
+	void draw() const;
 };

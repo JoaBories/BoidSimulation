@@ -208,7 +208,8 @@ void Terrain::update()
 
 void Terrain::draw() const 
 {
-	const Vec2F screenSize{ (float)GetScreenWidth(), (float)GetScreenHeight() };
+	float side = (float)std::min(GetScreenWidth(), GetScreenHeight());
+	const Vec2F screenSize{ side, side };
 	
 	const Rectangle sourceRect = { 0,0, (float)mMap.getSize().x, (float)mMap.getSize().y };
 	const Rectangle destRect = { 0, 0, screenSize.x, screenSize.y};

@@ -13,24 +13,24 @@ void BoidManager::checkScreenBounds(const uint32_t boidIndex)
 {    
     if (mBoidPositions[boidIndex].x < 0)
     {
-        mBoidPositions[boidIndex].x = 0;
-        mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
+        mBoidPositions[boidIndex].x = BOID_WRAP ? mScreenBounds.x : 0;
+        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
     }
     else if (mBoidPositions[boidIndex].x > mScreenBounds.x)
     {
-        mBoidPositions[boidIndex].x = mScreenBounds.x;
-        mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
+        mBoidPositions[boidIndex].x = BOID_WRAP ? 0 : mScreenBounds.x;
+        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
     }
     
     if (mBoidPositions[boidIndex].y < 0)
     {
-        mBoidPositions[boidIndex].y = 0;
-        mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
+        mBoidPositions[boidIndex].y = BOID_WRAP ? mScreenBounds.y : 0;
+        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
     }
     else if (mBoidPositions[boidIndex].y > mScreenBounds.y)
     {
-        mBoidPositions[boidIndex].y = mScreenBounds.y;
-        mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
+        mBoidPositions[boidIndex].y = BOID_WRAP ? 0 : mScreenBounds.y;
+        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
     }
 }
 
@@ -48,6 +48,8 @@ void BoidManager::applyRules(const uint32_t boidIndex)
     Vec2F groupSum { 0.0f, 0.0f };
     uint32_t groupCount = 0;
     
+    mBoidDensities[boidIndex] = 0;
+    
     for (int y = -stepY; y < stepY+1; y++)
     {
         if (gridPos.y + y < 0 || gridPos.y + y >= mGrid.getGridSize().y) continue;
@@ -62,13 +64,16 @@ void BoidManager::applyRules(const uint32_t boidIndex)
                 if (boidIndex == j) continue;
 
                 Vec2F distance = mBoidPositions[j] - mBoidPositions[boidIndex];
-                if (distance.dot(mBoidVelocities[boidIndex]) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
+                const float distanceSquared = distance.dot(distance);
+                
+                if (distanceSquared >= HIGHER_RANGE * HIGHER_RANGE) // Skip neighbors not in range
                 {
                     continue;
                 }
-
-                const float distanceSquared = distance.dot(distance);
-                if (distanceSquared >= HIGHER_RANGE * HIGHER_RANGE) // Skip neighbors not in range
+                
+                mBoidDensities[boidIndex] += 1;
+                
+                if (distance.dot(mBoidVelocities[boidIndex]) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
                 {
                     continue;
                 }
@@ -111,6 +116,8 @@ void BoidManager::applyRules(const uint32_t boidIndex)
 
     const Vec2F force = separate * BOID_WEIGHTS.separate + align * BOID_WEIGHTS.align + group * BOID_WEIGHTS.group;
     mBoidVelocities[boidIndex] += force * GetFrameTime();
+    
+    if (mMaxDensity < mBoidDensities[boidIndex]) mMaxDensity = mBoidDensities[boidIndex];
 }
 
 void BoidManager::updateBoids()
@@ -165,11 +172,12 @@ BoidManager::BoidManager(const uint32_t agentNumber) :
     mTotalUpdateTime(0), mUpdateCount(0),
     mScreenBounds((float)GetScreenWidth(), (float)GetScreenHeight())
 {
-    const Vec2I gridSize = Vec2I::One + (mScreenBounds / HIGHER_RANGE).to<int>();
+    const Vec2I gridSize = Vec2I::One + (mScreenBounds / HIGHER_RANGE * 2).to<int>();
     mGrid.resize(gridSize);
     
     mBoidPositions.reserve(mBoidNumber);
     mBoidVelocities.reserve(mBoidNumber);
+    mBoidDensities.resize(mBoidNumber);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
@@ -188,6 +196,8 @@ BoidManager::~BoidManager()
 
 void BoidManager::update()
 {
+    mMaxDensity = 0;
+    
     const auto start = std::chrono::high_resolution_clock::now();
     updateBoids();
     mGrid.updateGrid(mBoidPositions);
@@ -201,9 +211,12 @@ void BoidManager::draw() const
 {
     if (mBoidNumber == 0) return;
     
+    mGrid.draw();
+    
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        DrawCircleV(mBoidPositions[i].toRaylib(), 2.0f, DARKGRAY);
+        const Color color = colorLerp(YELLOW, RED, mBoidDensities[i] / mMaxDensity);
+        DrawCircleV(mBoidPositions[i].toRaylib(), 1.0f, color);
     }
     
     //draw debug
@@ -211,9 +224,11 @@ void BoidManager::draw() const
 
     const std::string updateTime = "average update time : " + std::to_string((float)mTotalUpdateTime / (float)mUpdateCount / 1000.0f) + " ms";
     const std::string boidTime = "average boid time : " + std::to_string((float)mTotalUpdateTime / (float)mBoidNumber / (float)mUpdateCount) + " us";
+    const std::string maxDensity = "max density : " + std::to_string(mMaxDensity);
     
-    DrawText(updateTime.c_str(), 10, 30, 20, DARKGREEN);
-    DrawText(boidTime.c_str(), 10, 50, 20, DARKGREEN);
+    DrawText(updateTime.c_str(), 10, 30, 20, GREEN);
+    DrawText(boidTime.c_str(), 10, 50, 20, GREEN);
+    DrawText(maxDensity.c_str(), 10, 70, 20, GREEN);
 }
 
 void BoidManager::logAverageUpdate() const
