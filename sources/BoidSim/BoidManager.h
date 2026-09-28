@@ -18,7 +18,7 @@ constexpr float GROUP_RANGE = 70.0f;
 constexpr float PERCEPTION_ANGLE = 120.0f;
 constexpr float MAX_SPEED = 50.0f;
 
-constexpr bool DEBUG_PERF = true;
+constexpr bool DEBUG_PERF = false;
 constexpr bool DEBUG_DENSITY = true;
 
 constexpr float DOT_PRODUCT_THRESHOLD = -(PERCEPTION_ANGLE / 180.0f - 1.0f);

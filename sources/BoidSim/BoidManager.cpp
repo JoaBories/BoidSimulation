@@ -7,39 +7,42 @@
 
 void BoidManager::resolveMovement(const size_t index)
 {
-    if (mVel.read(index).sqrLength() > MAX_SPEED * MAX_SPEED) mVel.write(index, mVel.read(index).normalized() * MAX_SPEED);
-    else mVel.write(index, mVel.read(index));
-    mPos.write(index, mPos.read(index) + mVel.read(index) * GetFrameTime());
+    if (mVel.readNext(index).sqrLength() > MAX_SPEED * MAX_SPEED) mVel.writeNext(index, mVel.readNext(index).normalized() * MAX_SPEED);
+    else mVel.writeNext(index, mVel.readNext(index));
+    mPos.writeNext(index, mPos.readCurrent(index) + mVel.readNext(index) * GetFrameTime());
+    
+    // readNext so it can read the updated velocity form apply rules
+    // no possible data concurrency because it only reads own boid infos
 }
 
 void BoidManager::checkScreenBounds(const size_t index)
 {
-    if (mPos.read(index).x < 0)
+    if (mPos.readNext(index).x < 0)
     {
-        mPos.write(index, { 0.0f , mPos.read(index).y } );
-        mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f) );
+        mPos.writeNext(index, { 0.0f , mPos.readNext(index).y } );
+        mVel.writeNext(index, mVel.readNext(index) * Vec2F(-1.0f, 1.0f) );
     }
-    else if (mPos.read(index).x > mScreenBounds.x)
+    else if (mPos.readNext(index).x > mScreenBounds.x)
     {
-        mPos.write(index, { mScreenBounds.x , mPos.read(index).y } );
-        mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f));
+        mPos.writeNext(index, { mScreenBounds.x , mPos.readNext(index).y } );
+        mVel.writeNext(index, mVel.readNext(index) * Vec2F(-1.0f, 1.0f));
     }
     
-    if (mPos.read(index).y < 0)
+    if (mPos.readNext(index).y < 0)
     {
-        mPos.write(index, { mPos.read(index).x, 0.0f } );
-        mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
+        mPos.writeNext(index, { mPos.readNext(index).x, 0.0f } );
+        mVel.writeNext(index, mVel.readNext(index) * Vec2F(1.0f, -1.0f));
     }
-    else if (mPos.read(index).y > mScreenBounds.y)
+    else if (mPos.readNext(index).y > mScreenBounds.y)
     {
-        mPos.write(index, { mPos.read(index).x, mScreenBounds.y } );
-        mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
+        mPos.writeNext(index, { mPos.readNext(index).x, mScreenBounds.y } );
+        mVel.writeNext(index, mVel.readNext(index) * Vec2F(1.0f, -1.0f));
     }
 }
 
 void BoidManager::applyRules(const size_t index)
 {
-    const Vec2I gridPos = mGrid.getGridPos(mPos.read(index));
+    const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(index));
 
     Vec2F separate { 0.0f, 0.0f };
 
@@ -64,7 +67,7 @@ void BoidManager::applyRules(const size_t index)
             {
                 if (index == j) continue;
 
-                Vec2F distance = mPos.read(j) - mPos.read(index);
+                Vec2F distance = mPos.readCurrent(j) - mPos.readCurrent(index);
                 const float distanceSquared = distance.dot(distance);
             
                 if (distanceSquared >= HIGHER_RANGE * HIGHER_RANGE) // Skip neighbors not in range
@@ -74,7 +77,7 @@ void BoidManager::applyRules(const size_t index)
             
                 density += 1.0f;
             
-                if (distance.dot(mVel.read(index)) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
+                if (distance.dot(mVel.readCurrent(index)) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
                 {
                     continue;
                 }
@@ -86,13 +89,13 @@ void BoidManager::applyRules(const size_t index)
 
                 if (distanceSquared <= ALIGN_RANGE * ALIGN_RANGE)
                 {
-                    alignSum += mVel.read(j);
+                    alignSum += mVel.readCurrent(j);
                     alignCount++;
                 }
 
                 if (distanceSquared <= GROUP_RANGE * GROUP_RANGE)
                 {
-                    groupSum += mPos.read(j);
+                    groupSum += mPos.readCurrent(j);
                     groupCount++;
                 }
             }
@@ -112,12 +115,12 @@ void BoidManager::applyRules(const size_t index)
     if (groupCount)
     {
         groupSum /= static_cast<float>(groupCount);
-        group = (groupSum - mPos.read(index)).normalized();
+        group = (groupSum - mPos.readCurrent(index)).normalized();
     }
 
     const Vec2F force = separate * BOID_WEIGHTS.separate + align * BOID_WEIGHTS.align + group * BOID_WEIGHTS.group;
-    mVel.write(index, mVel.read(index) + force * GetFrameTime());
-    mDensity.write(index, density);
+    mVel.writeNext(index, mVel.readCurrent(index) + force * GetFrameTime());
+    mDensity.writeNext(index, density);
 }
 
 void BoidManager::updateBoids()
@@ -125,7 +128,7 @@ void BoidManager::updateBoids()
     if (mBoidNumber == 0) return;
     
     std::vector<std::thread> workers;
-    const size_t chunkSize = (size_t)std::ceil((float)(mBoidNumber - 1) / (float)mThreadNumber);
+    const size_t chunkSize = (mBoidNumber + mThreadNumber - 1) / mThreadNumber;
     
     for (size_t thread = 0; thread < mThreadNumber; thread++)
     {
@@ -138,26 +141,6 @@ void BoidManager::updateBoids()
             for (size_t i = begin; i < end; i++)
             {
                 applyRules(i); // write all vel and density
-            }
-        });
-    }
-    for (auto& w : workers) w.join();   // sync point
-    workers.clear();
-
-    mVel.swap();     // need a "write all" to swap otherwise it will swap with outdated data.
-    mDensity.swap();
-    
-    // Without two distinct passes the comportment is bad because it updates position with 1 frame old velocity
-    for (size_t thread = 0; thread < mThreadNumber; thread++)
-    {
-        const size_t begin = thread * chunkSize;
-        const size_t end = Math::min(begin + chunkSize, mBoidNumber);
-        if (begin >= end) break;
-        
-        workers.emplace_back([&, begin, end]
-        {
-            for (size_t i = begin; i < end; i++)
-            {
                 resolveMovement(i); // write all vel and pos
                 checkScreenBounds(i); // update vel and pos
             }
@@ -167,24 +150,25 @@ void BoidManager::updateBoids()
     workers.clear();
 
     mPos.swap();
-    mVel.swap();
+    mVel.swap();     
+    mDensity.swap();
     
     mMaxDensity = 0;
-    for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.read(index), mMaxDensity);
+    for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.readCurrent(index), mMaxDensity);
 }
 
 void BoidManager::drawDebug(size_t boidIndex) const
 {
-    DrawLineEx(mPos.read(boidIndex).toRaylib(), (mPos.read(boidIndex) + mVel.read(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
+    DrawLineEx(mPos.readCurrent(boidIndex).toRaylib(), (mPos.readCurrent(boidIndex) + mVel.readCurrent(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
 
-    const float perceptionEdgeR = mVel.read(boidIndex).getRot() - PERCEPTION_ANGLE / 2;
-    const float perceptionEdgeL = mVel.read(boidIndex).getRot() + PERCEPTION_ANGLE / 2;
+    const float perceptionEdgeR = mVel.readCurrent(boidIndex).getRot() - PERCEPTION_ANGLE / 2;
+    const float perceptionEdgeL = mVel.readCurrent(boidIndex).getRot() + PERCEPTION_ANGLE / 2;
     
-    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), GROUP_RANGE, perceptionEdgeR, perceptionEdgeL, 10, PINK);
-    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), ALIGN_RANGE, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
-    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
+    DrawCircleSectorLines(mPos.readCurrent(boidIndex).toRaylib(), GROUP_RANGE, perceptionEdgeR, perceptionEdgeL, 10, PINK);
+    DrawCircleSectorLines(mPos.readCurrent(boidIndex).toRaylib(), ALIGN_RANGE, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
+    DrawCircleSectorLines(mPos.readCurrent(boidIndex).toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
     
-    const Vec2I gridPos = mGrid.getGridPos(mPos.read(boidIndex));
+    const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(boidIndex));
 
     for (int y = -mCellStep.y; y < mCellStep.y + 1; y++)
     {
@@ -198,7 +182,7 @@ void BoidManager::drawDebug(size_t boidIndex) const
             for (const uint32_t j : mGrid.getNeighbors(gridPos + Vec2I(x, y)))
             {
                 if (boidIndex == j) continue;
-                DrawCircleLines((int)mPos.read(j).x, (int)mPos.read(j).y, 20.0f, BLACK);
+                DrawCircleLines((int)mPos.readCurrent(j).x, (int)mPos.readCurrent(j).y, 20.0f, BLACK);
             }
         }
     }
@@ -225,9 +209,9 @@ BoidManager::BoidManager(const size_t agentNumber) :
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        mPos.write(i, { Math::randFloat(0, mScreenBounds.x), Math::randFloat(0, mScreenBounds.y) });
-        mVel.write(i, randVec2() * MAX_SPEED);
-        mDensity.write(i, 0.0f);
+        mPos.writeNext(i, { Math::randFloat(0, mScreenBounds.x), Math::randFloat(0, mScreenBounds.y) });
+        mVel.writeNext(i, randVec2() * MAX_SPEED);
+        mDensity.writeNext(i, 0.0f);
     }
     
     mPos.copy();
@@ -273,15 +257,15 @@ void BoidManager::draw() const
     
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            const Color color = colorLerp(YELLOW, RED, mDensity.read(i) / mMaxDensity);
-            DrawCircleV(mPos.read(i).toRaylib(), 1.0f, color);
+            const Color color = colorLerp(YELLOW, RED, mDensity.readCurrent(i) / mMaxDensity);
+            DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, color);
         }
     }
     else
     {
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            DrawCircleV(mPos.read(i).toRaylib(), 1.0f, RAYWHITE);
+            DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, RAYWHITE);
         }
     }
     

@@ -10,15 +10,15 @@ private:
 public:
     DoubleBufferVector() = default;
     
-    [[nodiscard]] const T& read(size_t index) const { return mCurrentVector[index]; }
-    void write(size_t index, const T& value) { mNextVector[index] = value; }
+    [[nodiscard]] const T& readCurrent(size_t index) const { return mCurrentVector[index]; }
+    [[nodiscard]] const T& readNext(size_t index) const { return mNextVector[index]; }
+    
+    void writeCurrent(size_t index, const T& value) { mNextVector[index] = value; }
+    void writeNext(size_t index, const T& value) { mNextVector[index] = value; }
 
     [[nodiscard]] const std::vector<T>& readVector() const { return mCurrentVector; }
     
-    void swap()
-    {
-        mCurrentVector.swap(mNextVector);
-    }
+    void swap() { mCurrentVector.swap(mNextVector); }
     
     void copy()
     {

@@ -11,7 +11,7 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(1000);
+	mBoidManager = new BoidManager(5000);
 	//mTerrain = new Terrain("resources/breeze_1024.png");
 }
 
