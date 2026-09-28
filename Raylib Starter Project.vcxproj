@@ -106,6 +106,7 @@
     <ClInclude Include="sources\BoidSim\BoidGrid.h" />
     <ClInclude Include="sources\AssetBank.h" />
     <ClInclude Include="sources\BoidSim\BoidManager.h" />
+    <ClInclude Include="sources\BoidSim\DoubleBufferVector.h" />
     <ClInclude Include="sources\Cam2D.h" />
     <ClInclude Include="sources\Engine.h" />
     <ClInclude Include="sources\GameActor.h" />

@@ -1,4 +1,5 @@
 #pragma once
+#include "DoubleBufferVector.h"
 #include "BoidSim/BoidGrid.h"
 
 struct BoidWeights
@@ -25,9 +26,9 @@ constexpr float HIGHER_RANGE = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, 
 class BoidManager
 {
 private:
-    std::vector<Vec2F> mBoidPositions;
-    std::vector<Vec2F> mBoidVelocities;
-    std::vector<float> mBoidDensities;
+    DoubleBufferVector<Vec2F> mPos;
+    DoubleBufferVector<Vec2F> mVel;
+    DoubleBufferVector<float> mDensity;
     uint32_t mBoidNumber;
 
     BoidGrid mGrid;
@@ -41,9 +42,9 @@ private:
     float mMaxDensity;
     
     
-    void resolveVelocity(uint32_t boidIndex);
-    void checkScreenBounds(uint32_t boidIndex);
-    void applyRules(uint32_t boidIndex);
+    void resolveMovement(size_t index);
+    void checkScreenBounds(size_t index);
+    void applyRules(size_t index);
     void updateBoids();
     
     void drawDebug(uint32_t boidIndex) const;
@@ -51,8 +52,7 @@ private:
 public:
     BoidManager() = delete;
     explicit BoidManager(uint32_t agentNumber);
-    
-    ~BoidManager();
+    ~BoidManager() = default;
     
     BoidManager(const BoidManager& other) = delete;
     BoidManager(BoidManager&& other) noexcept = delete;

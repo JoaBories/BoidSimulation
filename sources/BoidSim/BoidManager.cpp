@@ -1,53 +1,55 @@
 #include "BoidManager.h"
 
+#include <algorithm>
 #include <chrono>
 #include <string>
 
-void BoidManager::resolveVelocity(const uint32_t boidIndex)
+void BoidManager::resolveMovement(const size_t index)
 {
-    if (mBoidVelocities[boidIndex].sqrLength() > MAX_SPEED * MAX_SPEED) mBoidVelocities[boidIndex] = mBoidVelocities[boidIndex].normalized() * MAX_SPEED;
-    mBoidPositions[boidIndex] += mBoidVelocities[boidIndex] * GetFrameTime();
+    if (mVel.read(index).sqrLength() > MAX_SPEED * MAX_SPEED) mVel.write(index, mVel.read(index).normalized() * MAX_SPEED);
+    else mVel.write(index, mVel.read(index));
+    mPos.write(index, mPos.read(index) + mVel.read(index) * GetFrameTime());
 }
 
-void BoidManager::checkScreenBounds(const uint32_t boidIndex)
-{    
-    if (mBoidPositions[boidIndex].x < 0)
+void BoidManager::checkScreenBounds(const size_t index)
+{
+    if (mPos.read(index).x < 0)
     {
-        mBoidPositions[boidIndex].x = BOID_WRAP ? mScreenBounds.x : 0;
-        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
+        mPos.write(index, { 0.0f , mPos.read(index).y } );
+        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f) );
     }
-    else if (mBoidPositions[boidIndex].x > mScreenBounds.x)
+    else if (mPos.read(index).x > mScreenBounds.x)
     {
-        mBoidPositions[boidIndex].x = BOID_WRAP ? 0 : mScreenBounds.x;
-        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].x = -mBoidVelocities[boidIndex].x;
+        mPos.write(index, { mScreenBounds.x , mPos.read(index).y } );
+        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f));
     }
     
-    if (mBoidPositions[boidIndex].y < 0)
+    if (mPos.read(index).y < 0)
     {
-        mBoidPositions[boidIndex].y = BOID_WRAP ? mScreenBounds.y : 0;
-        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
+        mPos.write(index, { mPos.read(index).x, 0.0f } );
+        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
     }
-    else if (mBoidPositions[boidIndex].y > mScreenBounds.y)
+    else if (mPos.read(index).y > mScreenBounds.y)
     {
-        mBoidPositions[boidIndex].y = BOID_WRAP ? 0 : mScreenBounds.y;
-        if constexpr (!BOID_WRAP) mBoidVelocities[boidIndex].y = -mBoidVelocities[boidIndex].y;
+        mPos.write(index, { mPos.read(index).x, mScreenBounds.y } );
+        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
     }
 }
 
-void BoidManager::applyRules(const uint32_t boidIndex)
+void BoidManager::applyRules(const size_t index)
 {
-    const Vec2I gridPos = mGrid.getGridPos(mBoidPositions[boidIndex]);
-    
+    const Vec2I gridPos = mGrid.getGridPos(mPos.read(index));
+
     Vec2F separate { 0.0f, 0.0f };
-    
+
     Vec2F alignSum { 0.0f, 0.0f };
     uint32_t alignCount = 0;
-    
+
     Vec2F groupSum { 0.0f, 0.0f };
     uint32_t groupCount = 0;
     
-    mBoidDensities[boidIndex] = 0;
-    
+    float density = 0.0f;
+
     for (int y = -mCellStep.y; y < mCellStep.y+1; y++)
     {
         if (gridPos.y + y < 0 || gridPos.y + y >= mGrid.getGridSize().y) continue;
@@ -59,19 +61,19 @@ void BoidManager::applyRules(const uint32_t boidIndex)
 
             for (const uint32_t j : mGrid.getNeighbors(gridPos + Vec2I(x,y)))
             {
-                if (boidIndex == j) continue;
+                if (index == j) continue;
 
-                Vec2F distance = mBoidPositions[j] - mBoidPositions[boidIndex];
+                Vec2F distance = mPos.read(j) - mPos.read(index);
                 const float distanceSquared = distance.dot(distance);
-                
+            
                 if (distanceSquared >= HIGHER_RANGE * HIGHER_RANGE) // Skip neighbors not in range
                 {
                     continue;
                 }
-                
-                mBoidDensities[boidIndex] += 1;
-                
-                if (distance.dot(mBoidVelocities[boidIndex]) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
+            
+                density += 1.0f;
+            
+                if (distance.dot(mVel.read(index)) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
                 {
                     continue;
                 }
@@ -83,65 +85,76 @@ void BoidManager::applyRules(const uint32_t boidIndex)
 
                 if (distanceSquared <= ALIGN_RANGE * ALIGN_RANGE)
                 {
-                    alignSum += mBoidVelocities[j];
+                    alignSum += mVel.read(j);
                     alignCount++;
                 }
 
                 if (distanceSquared <= GROUP_RANGE * GROUP_RANGE)
                 {
-                    groupSum += mBoidPositions[j];
+                    groupSum += mPos.read(j);
                     groupCount++;
                 }
             }
         }
     }
-    
+
     separate = separate.normalized();
-    
+
     Vec2F align { 0.0f, 0.0f };
     if (alignCount)
     {
         alignSum /= static_cast<float>(alignCount);
         align = alignSum.normalized() * MAX_SPEED;
     }
-    
+
     Vec2F group { 0.0f, 0.0f };
     if (groupCount)
     {
         groupSum /= static_cast<float>(groupCount);
-        group = (groupSum - mBoidPositions[boidIndex]).normalized();
+        group = (groupSum - mPos.read(index)).normalized();
     }
 
     const Vec2F force = separate * BOID_WEIGHTS.separate + align * BOID_WEIGHTS.align + group * BOID_WEIGHTS.group;
-    mBoidVelocities[boidIndex] += force * GetFrameTime();
-    
-    if (mMaxDensity < mBoidDensities[boidIndex]) mMaxDensity = mBoidDensities[boidIndex];
+    mVel.write(index, mVel.read(index) + force * GetFrameTime());
+    mDensity.write(index, density);
 }
 
 void BoidManager::updateBoids()
 {
     if (mBoidNumber == 0) return;
     
-    for (uint32_t i = 0; i < mBoidNumber; i++)
+    for (size_t i = 0; i < mBoidNumber; i++)
     {
-        applyRules(i);
-        resolveVelocity(i);
-        checkScreenBounds(i);
+        applyRules(i); // write all vel and density
     }
+    mVel.swap();     // need a "write all" to swap otherwise it will swap with outdated data.
+    mDensity.swap();
+    
+    // Without two distinct passes the comportment is bad because it updates position with 1 frame old velocity
+    for (size_t i = 0; i < mBoidNumber; i++)
+    {
+        resolveMovement(i); // write all vel and pos
+        checkScreenBounds(i); // update vel and pos
+    }
+    mPos.swap();
+    mVel.swap();
+    
+    mMaxDensity = 0;
+    for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.read(index), mMaxDensity);
 }
 
 void BoidManager::drawDebug(const uint32_t boidIndex) const
 {
-    DrawLineEx(mBoidPositions[boidIndex].toRaylib(), (mBoidPositions[boidIndex] + mBoidVelocities[boidIndex] * 1).toRaylib(), 1.0f, GREEN);
+    DrawLineEx(mPos.read(boidIndex).toRaylib(), (mPos.read(boidIndex) + mVel.read(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
 
-    const float perceptionEdgeR = mBoidVelocities[boidIndex].getRot() - PERCEPTION_ANGLE / 2;
-    const float perceptionEdgeL = mBoidVelocities[boidIndex].getRot() + PERCEPTION_ANGLE / 2;
+    const float perceptionEdgeR = mVel.read(boidIndex).getRot() - PERCEPTION_ANGLE / 2;
+    const float perceptionEdgeL = mVel.read(boidIndex).getRot() + PERCEPTION_ANGLE / 2;
     
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), GROUP_RANGE, perceptionEdgeR, perceptionEdgeL, 10, PINK);
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), ALIGN_RANGE, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
-    DrawCircleSectorLines(mBoidPositions[boidIndex].toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
+    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), GROUP_RANGE, perceptionEdgeR, perceptionEdgeL, 10, PINK);
+    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), ALIGN_RANGE, perceptionEdgeR, perceptionEdgeL, 10, ORANGE);
+    DrawCircleSectorLines(mPos.read(boidIndex).toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
     
-    const Vec2I gridPos = mGrid.getGridPos(mBoidPositions[boidIndex]);
+    const Vec2I gridPos = mGrid.getGridPos(mPos.read(boidIndex));
 
     for (int y = -mCellStep.y; y < mCellStep.y + 1; y++)
     {
@@ -155,7 +168,7 @@ void BoidManager::drawDebug(const uint32_t boidIndex) const
             for (const uint32_t j : mGrid.getNeighbors(gridPos + Vec2I(x, y)))
             {
                 if (boidIndex == j) continue;
-                DrawCircleLines((int)mBoidPositions[j].x, (int)mBoidPositions[j].y, 20.0f, BLACK);
+                DrawCircleLines((int)mPos.read(j).x, (int)mPos.read(j).y, 20.0f, BLACK);
             }
         }
     }
@@ -174,34 +187,31 @@ BoidManager::BoidManager(const uint32_t agentNumber) :
     const int stepY = (int)std::ceil(HIGHER_RANGE / mGrid.getCellSize().y / 2.0f);
     mCellStep = Vec2I(stepX, stepY);
     
-    mBoidPositions.reserve(mBoidNumber);
-    mBoidVelocities.reserve(mBoidNumber);
-    mBoidDensities.resize(mBoidNumber);
+    mPos.resize(mBoidNumber);
+    mVel.resize(mBoidNumber);
+    mDensity.resize(mBoidNumber);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        mBoidPositions.emplace_back(Math::randFloat(0, mScreenBounds.x), Math::randFloat(0, mScreenBounds.y));
-        mBoidVelocities.emplace_back(randVec2() * MAX_SPEED);
+        mPos.write(i, { Math::randFloat(0, mScreenBounds.x), Math::randFloat(0, mScreenBounds.y) });
+        mVel.write(i, randVec2() * MAX_SPEED);
+        mDensity.write(i, 0.0f);
     }
     
-    mGrid.updateGrid(mBoidPositions);
-}
-
-BoidManager::~BoidManager()
-{
-    mBoidPositions.clear();
-    mBoidVelocities.clear();
+    mPos.copy();
+    mVel.copy();
+    mDensity.copy();
+    
+    mGrid.updateGrid(mPos.readVector());
 }
 
 void BoidManager::update()
 {
-    mMaxDensity = 0;
-
     if constexpr (DEBUG_PERF)
     {
         const auto start = std::chrono::high_resolution_clock::now();
         updateBoids();
-        mGrid.updateGrid(mBoidPositions);
+        mGrid.updateGrid(mPos.readVector());
         const auto end = std::chrono::high_resolution_clock::now();
         
         mTotalUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -217,7 +227,7 @@ void BoidManager::update()
     else
     {
         updateBoids();
-        mGrid.updateGrid(mBoidPositions);
+        mGrid.updateGrid(mPos.readVector());
     }
 }
 
@@ -231,15 +241,15 @@ void BoidManager::draw() const
     
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            const Color color = colorLerp(YELLOW, RED, mBoidDensities[i] / mMaxDensity);
-            DrawCircleV(mBoidPositions[i].toRaylib(), 1.0f, color);
+            const Color color = colorLerp(YELLOW, RED, mDensity.read(i) / mMaxDensity);
+            DrawCircleV(mPos.read(i).toRaylib(), 1.0f, color);
         }
     }
     else
     {
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            DrawCircleV(mBoidPositions[i].toRaylib(), 1.0f, RAYWHITE);
+            DrawCircleV(mPos.read(i).toRaylib(), 1.0f, RAYWHITE);
         }
     }
     
