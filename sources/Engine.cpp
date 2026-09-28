@@ -4,14 +4,14 @@
 void Engine::init()
 {
 	SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-	InitWindow(900, 900, "Boid Simulation");
+	InitWindow(800, 800, "Boid Simulation");
 	
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(100);
+	mBoidManager = new BoidManager(500);
 	
 	mTerrain = new Terrain("resources/breeze_1024.png");
 }
@@ -62,7 +62,7 @@ void Engine::draw() const
 		}
 	}
 
-	DrawFPS(10, 10);
+	if constexpr (DEBUG_PERF) DrawFPS(10, 10);
 	
 	EndDrawing();
 }

@@ -6,13 +6,13 @@ follow an objective. I use **inverse dijkstra** that create a cost grid and tran
 a flow field using a **Sobel Filter** that the boid can follow.
 
 For the boids i implemented some optimizations such as a Data oriented management and a grid partitionning.
+I also added an option to display density at boid and grid level;
 
 ### Parameters :
-- You can find weight for boid behavior in [``` BoidSim/BoidManager.h ```](https://github.com/JoaBories/BoidSimulation/blob/main/sources/BoidSim/BoidManager.h) alongside some other parameters 
-such as range, perception angle and max speed. 
-- You can find ```GRID_SIZE``` parameter in [``` BoidSim/BoidGrid.h ```](https://github.com/JoaBories/BoidSimulation/blob/main/sources/BoidSim/BoidGrid.h). 
-- Finally you can find window size ```" InitWindow(1280, 720 ... " ``` and boid number ``` " ... BoidManager(1000) " ``` 
-in [``` Engine.cpp ```](https://github.com/JoaBories/BoidSimulation/blob/main/sources/Engine.cpp)
+- You can find weight for boid behavior in ``` BoidSim/BoidManager.h ``` alongside some other parameters 
+such as range, perception angle, max speed and many others.
+- Finally you can find window size ```" InitWindow(1280, 720 ... " ```, boid number ``` " ... BoidManager(1000) " ``` 
+and terrain source ``` " ... Terrain(resources/breeze_1024.png) " ```  in ``` Engine.cpp ```.
 
 ### Further Upgrades
 It is possible to optimize boids by switching to a **kdTree** instead of the grid or improving grid checking to test 
@@ -25,12 +25,13 @@ It is also possible to imply randomness or learning in each boids weights.
 Update time are mesured with 800 by 800 window, 500 boids and are Whole update time and per boid update time. Average on 1 minute of simulation.
 Optimizations are cumulative.
 
-| Boid Optimizations            | Debug           | Release         |
-|-------------------------------|-----------------|-----------------|
-| Baseline (data-oriented)      | 5.74ms / 11.4µs | 1.15ms / 2.29µs |
-| Grid (5x5 cells)              | 2.56ms / 5.12µs | 0.44ms / 0.80µs |
-| Grid (10x10 cells)            | 1.39ms / 2.77µs | 0.24ms / 0.49µs |
-| Use of noexcept and constexpr | 1.34ms / 2.68µs | 0.21ms / 0.42µs |
+| Boid Optimizations            | Debug            | Release         |
+|-------------------------------|------------------|-----------------|
+| Baseline (data-oriented)      | 5.74ms / 11.4µs  | 1.15ms / 2.29µs |
+| Grid (5x5 cells)              | 2.56ms / 5.12µs  | 0.44ms / 0.80µs |
+| Grid (10x10 cells)            | 1.39ms / 2.77µs  | 0.24ms / 0.49µs |
+| Use of noexcept and constexpr | 1.34ms / 2.68µs  | 0.21ms / 0.42µs |
+| Added densities               | 2.55ms / 5.011µs | 0.35ms / 0.71µs |
 
 ### Mesured Dijkstra time
 Dijkstra time is mesured using ``` breeze_1024.png ``` and ``` breeze_2048.png ``` as map.
