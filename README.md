@@ -22,16 +22,19 @@ It is also possible to imply randomness or learning in each boids weights.
 ---
 
 ### Mesured average boids update time
-Update time are mesured with 800 by 800 window, 500 boids and are Whole update time and per boid update time. Average on 1 minute of simulation.
-Optimizations are cumulative.
+Update time are mesured with 800 by 800 window, 1000 and 10000 boids. Time represent per boid update time. 
+Average on 1 minute of simulation. Optimizations are cumulative.
 
-| Boid Optimizations            | Debug            | Release         |
-|-------------------------------|------------------|-----------------|
-| Baseline (data-oriented)      | 5.74ms / 11.4µs  | 1.15ms / 2.29µs |
-| Grid (5x5 cells)              | 2.56ms / 5.12µs  | 0.44ms / 0.80µs |
-| Grid (10x10 cells)            | 1.39ms / 2.77µs  | 0.24ms / 0.49µs |
-| Use of noexcept and constexpr | 1.34ms / 2.68µs  | 0.21ms / 0.42µs |
-| Added densities               | 2.55ms / 5.011µs | 0.35ms / 0.71µs |
+not updated !!!
+
+| Boid Optimizations            | 1000 / 10000    |
+|-------------------------------|-----------------|
+| Baseline (data-oriented)      | 1.15ms / 2.29µs |
+| Grid (5x5 cells)              | 0.44ms / 0.80µs |
+| Grid (10x10 cells)            | 0.24ms / 0.49µs |
+| Use of noexcept and constexpr | 0.21ms / 0.42µs |
+| Added densities               | 0.35ms / 0.71µs |
+| Use of multithread            | 0.35ms / 0.71µs |
 
 ### Mesured Dijkstra time
 Dijkstra time is mesured using ``` breeze_1024.png ``` and ``` breeze_2048.png ``` as map.

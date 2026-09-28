@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <thread>
 
 void BoidManager::resolveMovement(const size_t index)
 {
@@ -16,23 +17,23 @@ void BoidManager::checkScreenBounds(const size_t index)
     if (mPos.read(index).x < 0)
     {
         mPos.write(index, { 0.0f , mPos.read(index).y } );
-        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f) );
+        mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f) );
     }
     else if (mPos.read(index).x > mScreenBounds.x)
     {
         mPos.write(index, { mScreenBounds.x , mPos.read(index).y } );
-        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f));
+        mVel.write(index, mVel.read(index) * Vec2F(-1.0f, 1.0f));
     }
     
     if (mPos.read(index).y < 0)
     {
         mPos.write(index, { mPos.read(index).x, 0.0f } );
-        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
+        mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
     }
     else if (mPos.read(index).y > mScreenBounds.y)
     {
         mPos.write(index, { mPos.read(index).x, mScreenBounds.y } );
-        if constexpr (!BOID_WRAP) mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
+        mVel.write(index, mVel.read(index) * Vec2F(1.0f, -1.0f));
     }
 }
 
@@ -123,19 +124,48 @@ void BoidManager::updateBoids()
 {
     if (mBoidNumber == 0) return;
     
-    for (size_t i = 0; i < mBoidNumber; i++)
+    std::vector<std::thread> workers;
+    const size_t chunkSize = (size_t)std::ceil((float)(mBoidNumber - 1) / (float)mThreadNumber);
+    
+    for (size_t thread = 0; thread < mThreadNumber; thread++)
     {
-        applyRules(i); // write all vel and density
+        const size_t begin = thread * chunkSize;
+        const size_t end = Math::min(begin + chunkSize, mBoidNumber);
+        if (begin >= end) break;
+        
+        workers.emplace_back([&, begin, end]
+        {
+            for (size_t i = begin; i < end; i++)
+            {
+                applyRules(i); // write all vel and density
+            }
+        });
     }
+    for (auto& w : workers) w.join();   // sync point
+    workers.clear();
+
     mVel.swap();     // need a "write all" to swap otherwise it will swap with outdated data.
     mDensity.swap();
     
     // Without two distinct passes the comportment is bad because it updates position with 1 frame old velocity
-    for (size_t i = 0; i < mBoidNumber; i++)
+    for (size_t thread = 0; thread < mThreadNumber; thread++)
     {
-        resolveMovement(i); // write all vel and pos
-        checkScreenBounds(i); // update vel and pos
+        const size_t begin = thread * chunkSize;
+        const size_t end = Math::min(begin + chunkSize, mBoidNumber);
+        if (begin >= end) break;
+        
+        workers.emplace_back([&, begin, end]
+        {
+            for (size_t i = begin; i < end; i++)
+            {
+                resolveMovement(i); // write all vel and pos
+                checkScreenBounds(i); // update vel and pos
+            }
+        });
     }
+    for (auto& w : workers) w.join();   // sync point
+    workers.clear();
+
     mPos.swap();
     mVel.swap();
     
@@ -143,7 +173,7 @@ void BoidManager::updateBoids()
     for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.read(index), mMaxDensity);
 }
 
-void BoidManager::drawDebug(const uint32_t boidIndex) const
+void BoidManager::drawDebug(size_t boidIndex) const
 {
     DrawLineEx(mPos.read(boidIndex).toRaylib(), (mPos.read(boidIndex) + mVel.read(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
 
@@ -174,12 +204,14 @@ void BoidManager::drawDebug(const uint32_t boidIndex) const
     }
 }
 
-BoidManager::BoidManager(const uint32_t agentNumber) :
+BoidManager::BoidManager(const size_t agentNumber) :
     mBoidNumber(agentNumber), mGrid(Vec2I::Zero),
     mScreenBounds((float)GetScreenWidth(), (float)GetScreenHeight()), 
     mTotalUpdateTime(0), mUpdateCount(0), mLogTime(0.0f),
     mMaxDensity(0.0f)
 {
+    mThreadNumber = Math::min(std::thread::hardware_concurrency(), 1u);
+    
     const Vec2I gridSize = Vec2I::One + (mScreenBounds / HIGHER_RANGE).to<int>();
     mGrid.resize(gridSize);
     
@@ -207,11 +239,12 @@ BoidManager::BoidManager(const uint32_t agentNumber) :
 
 void BoidManager::update()
 {
+    mGrid.updateGrid(mPos.readVector());
+    
     if constexpr (DEBUG_PERF)
     {
         const auto start = std::chrono::high_resolution_clock::now();
         updateBoids();
-        mGrid.updateGrid(mPos.readVector());
         const auto end = std::chrono::high_resolution_clock::now();
         
         mTotalUpdateTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -227,7 +260,6 @@ void BoidManager::update()
     else
     {
         updateBoids();
-        mGrid.updateGrid(mPos.readVector());
     }
 }
 

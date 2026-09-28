@@ -1,4 +1,6 @@
 #pragma once
+#include <thread>
+
 #include "DoubleBufferVector.h"
 #include "BoidSim/BoidGrid.h"
 
@@ -16,7 +18,6 @@ constexpr float GROUP_RANGE = 70.0f;
 constexpr float PERCEPTION_ANGLE = 120.0f;
 constexpr float MAX_SPEED = 50.0f;
 
-constexpr bool BOID_WRAP = false;
 constexpr bool DEBUG_PERF = true;
 constexpr bool DEBUG_DENSITY = true;
 
@@ -29,9 +30,11 @@ private:
     DoubleBufferVector<Vec2F> mPos;
     DoubleBufferVector<Vec2F> mVel;
     DoubleBufferVector<float> mDensity;
-    uint32_t mBoidNumber;
+    size_t mBoidNumber;
 
     BoidGrid mGrid;
+    size_t mThreadNumber;
+    
     Vec2I mCellStep;
     Vec2F mScreenBounds;
     
@@ -47,11 +50,11 @@ private:
     void applyRules(size_t index);
     void updateBoids();
     
-    void drawDebug(uint32_t boidIndex) const;
+    void drawDebug(size_t boidIndex) const;
     
 public:
     BoidManager() = delete;
-    explicit BoidManager(uint32_t agentNumber);
+    explicit BoidManager(size_t agentNumber);
     ~BoidManager() = default;
     
     BoidManager(const BoidManager& other) = delete;
