@@ -210,7 +210,7 @@ BoidManager::BoidManager(const size_t agentNumber) :
     mTotalUpdateTime(0), mUpdateCount(0), mLogTime(0.0f),
     mMaxDensity(0.0f)
 {
-    mThreadNumber = Math::min(std::thread::hardware_concurrency(), 1u);
+    mThreadNumber = Math::max(std::thread::hardware_concurrency(), 1u);
     
     const Vec2I gridSize = Vec2I::One + (mScreenBounds / HIGHER_RANGE).to<int>();
     mGrid.resize(gridSize);

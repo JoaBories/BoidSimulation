@@ -27,14 +27,12 @@ Average on 1 minute of simulation. Optimizations are cumulative.
 
 not updated !!!
 
-| Boid Optimizations            | 1000 / 10000    |
-|-------------------------------|-----------------|
-| Baseline (data-oriented)      | 1.15ms / 2.29µs |
-| Grid (5x5 cells)              | 0.44ms / 0.80µs |
-| Grid (10x10 cells)            | 0.24ms / 0.49µs |
-| Use of noexcept and constexpr | 0.21ms / 0.42µs |
-| Added densities               | 0.35ms / 0.71µs |
-| Use of multithread            | 0.35ms / 0.71µs |
+| Boid Optimizations       | 1k / 10k        |
+|--------------------------|-----------------|
+| Baseline (data-oriented) | 4.54µs / 46.8µs |
+| Grid                     | 0.90µs / 6.96µs |
+| Multithread              | 5.09µs / 1.73µs |
+
 
 ### Mesured Dijkstra time
 Dijkstra time is mesured using ``` breeze_1024.png ``` and ``` breeze_2048.png ``` as map.

@@ -12,7 +12,7 @@ void Engine::init()
 	mAssetBank->Init();
 	
 	mBoidManager = new BoidManager(1000);
-	mTerrain = new Terrain("resources/breeze_1024.png");
+	//mTerrain = new Terrain("resources/breeze_1024.png");
 }
 
 void Engine::close()
