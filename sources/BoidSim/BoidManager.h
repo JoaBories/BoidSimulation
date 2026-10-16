@@ -3,6 +3,7 @@
 
 #include "DoubleBufferVector.h"
 #include "BoidSim/BoidGrid.h"
+#include "Terrain/Terrain.h"
 
 struct BoidWeights
 {
@@ -19,7 +20,9 @@ constexpr float PERCEPTION_ANGLE = 120.0f;
 constexpr float MAX_SPEED = 50.0f;
 
 constexpr bool DEBUG_PERF = false;
-constexpr bool DEBUG_DENSITY = true;
+constexpr bool DEBUG_DENSITY = false;
+
+constexpr bool USE_MULTITHREADING = false;
 
 constexpr float DOT_PRODUCT_THRESHOLD = -(PERCEPTION_ANGLE / 180.0f - 1.0f);
 constexpr float HIGHER_RANGE = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, GROUP_RANGE));
@@ -44,10 +47,12 @@ private:
     
     float mMaxDensity;
     
+    Terrain* mTerrain;
     
     void resolveMovement(size_t index);
     void checkScreenBounds(size_t index);
     void applyRules(size_t index);
+    void resolveTerrain(size_t index);
     void updateBoids();
     
     void drawDebug(size_t boidIndex) const;
@@ -64,6 +69,8 @@ public:
     
     void update();
     void draw() const;
+    
+    void setTerrain(Terrain* terrain) { mTerrain = terrain; }
     
     void logAverageUpdate() const;
 };

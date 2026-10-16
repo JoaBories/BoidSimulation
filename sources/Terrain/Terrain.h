@@ -34,6 +34,8 @@ public:
 	
 	void newDestination(const Vec2I& destination);
 	
+	Vec2I getGridFromPos(const Vec2F& pos) const; 
+	
 	[[nodiscard]] bool isWalkable(const Vec2I& pos, uint8_t threshold = 128) const;
 	[[nodiscard]] bool isWalkable(const uint64_t& it, uint8_t threshold = 128) const;
 

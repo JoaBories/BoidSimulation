@@ -123,31 +123,50 @@ void BoidManager::applyRules(const size_t index)
     mDensity.writeNext(index, density);
 }
 
+void BoidManager::resolveTerrain(size_t index)
+{
+    
+}
+
 void BoidManager::updateBoids()
 {
     if (mBoidNumber == 0) return;
     
-    std::vector<std::thread> workers;
-    const size_t chunkSize = (mBoidNumber + mThreadNumber - 1) / mThreadNumber;
-    
-    for (size_t thread = 0; thread < mThreadNumber; thread++)
+    if constexpr (USE_MULTITHREADING)
     {
-        const size_t begin = thread * chunkSize;
-        const size_t end = Math::min(begin + chunkSize, mBoidNumber);
-        if (begin >= end) break;
-        
-        workers.emplace_back([&, begin, end]
+        std::vector<std::thread> workers;
+        const size_t chunkSize = (mBoidNumber + mThreadNumber - 1) / mThreadNumber;
+    
+        for (size_t thread = 0; thread < mThreadNumber; thread++)
         {
-            for (size_t i = begin; i < end; i++)
+            const size_t begin = thread * chunkSize;
+            const size_t end = Math::min(begin + chunkSize, mBoidNumber);
+            if (begin >= end) break;
+        
+            workers.emplace_back([&, begin, end]
             {
-                applyRules(i); // write all vel and density
-                resolveMovement(i); // write all vel and pos
-                checkScreenBounds(i); // update vel and pos
-            }
-        });
+                for (size_t i = begin; i < end; i++)
+                {
+                    applyRules(i); // write all vel and density
+                    if (mTerrain) resolveTerrain(i); // write all vel
+                    resolveMovement(i); // write all vel and pos
+                    checkScreenBounds(i); // update vel and pos
+                }
+            });
+        }
+        for (auto& w : workers) w.join();   // sync point
+        workers.clear();
     }
-    for (auto& w : workers) w.join();   // sync point
-    workers.clear();
+    else
+    {
+        for (size_t i = 0; i < mBoidNumber; i++)
+        {
+            applyRules(i); // write all vel and density
+            if (mTerrain) resolveTerrain(i); // write all vel
+            resolveMovement(i); // write all vel and pos
+            checkScreenBounds(i); // update vel and pos
+        }
+    }
 
     mPos.swap();
     mVel.swap();     
@@ -203,9 +222,9 @@ BoidManager::BoidManager(const size_t agentNumber) :
     const int stepY = (int)std::ceil(HIGHER_RANGE / mGrid.getCellSize().y / 2.0f);
     mCellStep = Vec2I(stepX, stepY);
     
-    mPos.resize(mBoidNumber);
-    mVel.resize(mBoidNumber);
-    mDensity.resize(mBoidNumber);
+    mPos.resize(mBoidNumber, Vec2F::Zero);
+    mVel.resize(mBoidNumber, Vec2F::Zero);
+    mDensity.resize(mBoidNumber, 0);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {

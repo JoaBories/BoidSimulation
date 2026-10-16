@@ -1,6 +1,7 @@
 #include "Terrain.h"
 
 #include <chrono>
+#include <functional>
 #include <queue>
 
 namespace
@@ -17,7 +18,7 @@ void Terrain::buildCostGrid()
 	std::priority_queue<CellCostPos, std::vector<CellCostPos>, CellComp> cellsToVisit;
 	uint16_t currentCost = 1;
 	
-	mCostGrid.clear();
+	mCostGrid.clear(0xFFFF);
 	
 	mCostGrid[mDestination] = currentCost;
 	cellsToVisit.emplace(currentCost, mDestination);
@@ -31,14 +32,14 @@ void Terrain::buildCostGrid()
 		
 		for (int x = -1; x < 2; x++) // Iterate through all neighbor cells.
 		{
-			if (pos.x + x < 0 || pos.x + x >= mMap.getSize().x) continue; // Eliminate cell that aren't in the board.
+			if (pos.x + x < 0 || pos.x + x >= mCostGrid.getSize().x) continue; // Eliminate cell that aren't in the board.
 			
 			for (int y = -1; y < 2; y++) // Iterate through all neighbor cells.
 			{
 				if (x == 0 && y == 0) continue; // Eliminate cell that aren't in the board.
 				if (pos.y + y < 0 || pos.y + y >= mCostGrid.getSize().y) continue; // Eliminate in the same cell.
 
-				if (const Vec2I newCell = pos + Vec2I{ x, y }; isWalkable(newCell) && mCostGrid[newCell] == 0)
+				if (const Vec2I newCell = pos + Vec2I{ x, y }; isWalkable(newCell) && mCostGrid[newCell] == 0xFFFF)
 				{
 					const uint16_t newCost = currentCost + (x == 0 || y == 0 ? 5 : 7);
 					
@@ -71,34 +72,45 @@ void Terrain::loadCostTexture() const
 
 void Terrain::buildFlowField()
 {
-	mFlowField.clear();
+	mFlowField.clear(Vec2F::Zero);
+	const int width = mCostGrid.getSize().x;
+	const int height = mCostGrid.getSize().y;
 	
 	for (size_t it = 0; it < mCostGrid.getItSize(); it++)
 	{
-		if (!isWalkable(it)) continue;
+		const int centerCost = mCostGrid[it];
+		if (centerCost == 0xFFFF) continue;
 
 		const Vec2I pos = mCostGrid.indexToVec2(it);
 		
-		Vec2I kernelResult = Vec2I::Zero;
+		// Compute safe limits so I can avoid later checks
+		const int xMin = Math::max(0 , pos.x - 1);
+		const int xMax = Math::min(width - 1 , pos.x + 1);
+		const int yMin = Math::max(0 , pos.y - 1);
+		const int yMax = Math::min(height - 1 , pos.y + 1);
 		
-		for (int x = -1; x < 2; x++)
-		{
-			if (pos.x + x < 0 || pos.x + x >= mCostGrid.getSize().x) continue; // Eliminate cell that aren't in the board.
-			
-			for (int y = -1; y < 2; y++)
+		int gX = 0;
+		int gY = 0;
+		
+		// use direct limits for iterators
+		for (int x = xMin; x <= xMax; x++)
+		{			
+			for (int y = yMin; y <= yMax; y++)
 			{
-				if (x == 0 && y == 0) continue;
-				if (pos.y + y < 0 || pos.y + y >= mCostGrid.getSize().y) continue; // Eliminate cell that aren't in the board.
+				if (x == pos.x && y == pos.y) continue;
 				
-				Vec2I newPos = pos + Vec2I{ x, y };
-				if (!isWalkable(newPos)) continue;
-
-				const int cost = (int)mCostGrid[newPos];
-				kernelResult += Vec2I{cost * x * (y == 0 ? 2 : 1), cost * y * (x == 0 ? 2 : 1)};
+				const int distanceX = x - pos.x;
+				const int distanceY = y - pos.y;
+				
+				const int cost = mCostGrid[{ x, y }];
+				const int costDifference = cost - centerCost;
+				
+				gX += costDifference * distanceX * (distanceY == 0 ? 2 : 1);
+				gY += costDifference * distanceY * (distanceX == 0 ? 2 : 1);
 			}
 		}
 		
-		mFlowField[it] = -kernelResult.to<float>().normalized();
+		mFlowField[it] = Vec2F((float)gX, (float)gY).normalized();
 	}
 }
 
@@ -127,9 +139,9 @@ Terrain::Terrain(const std::string& imagePath) :
 	Image tempImg = LoadImage(imagePath.c_str());
 
 	const Vec2I size = {tempImg.width, tempImg.height};
-	mFlowField.resize(size);
-	mCostGrid.resize(size);
-	mMap.resize(size);
+	mFlowField.resize(size, Vec2F::Zero);
+	mCostGrid.resize(size, 0xFFFF);
+	mMap.resize(size, 0);
 	
 	for (size_t it = 0; it < mMap.getItSize(); it++)
 	{
@@ -183,6 +195,11 @@ void Terrain::newDestination(const Vec2I& destination)
 	std::cout << "Flow field Time : " << std::to_string((float)flowTime / 1000.0f) << " ms" << '\n';
 }
 
+Vec2I Terrain::getGridFromPos(const Vec2F& pos) const
+{
+	return Vec2I{ (int)pos.x * mMap.getSize().x / GetScreenWidth(), (int)pos.y * mMap.getSize().y / GetScreenHeight() };
+}
+
 bool Terrain::isWalkable(const Vec2I& pos, const uint8_t threshold) const
 {
 	if (pos.x < 0 || pos.x >= mMap.getSize().x) return false;
@@ -201,7 +218,7 @@ void Terrain::update()
 {
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
 	{
-		mDestination = Vec2I(GetMousePosition()) * mMap.getSize() / Vec2I{ GetScreenWidth(), GetScreenHeight() };
+		mDestination = getGridFromPos(GetMousePosition());
 		newDestination(mDestination);
 	}
 }

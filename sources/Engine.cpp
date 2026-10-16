@@ -4,15 +4,15 @@
 void Engine::init()
 {
 	SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-	InitWindow(800, 800, "Boid Simulation");
+	InitWindow(1024, 1024, "Boid Simulation");
 	
 	SetTargetFPS(60);
 	
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(5000);
-	//mTerrain = new Terrain("resources/breeze_1024.png");
+	mBoidManager = new BoidManager(50);
+	mTerrain = new Terrain("resources/test.png");
 }
 
 void Engine::close()
@@ -32,7 +32,7 @@ void Engine::close()
 void Engine::update()
 {
 	mBoidManager->update();
-	//mTerrain->update();
+	mTerrain->update();
 	
 	if (!GameActor::actors().empty())
 	{
@@ -50,7 +50,7 @@ void Engine::draw() const
 	BeginDrawing();
 	ClearBackground({ 20, 20, 20, 255 });
 	
-	//mTerrain->draw();
+	mTerrain->draw();
 	mBoidManager->draw();
 	
 	if (!GameActor::actors().empty())

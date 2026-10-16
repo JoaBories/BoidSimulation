@@ -29,10 +29,10 @@ public:
     }
     
     [[nodiscard]] size_t size() const { return mCurrentVector.size(); }
-    void resize(size_t newSize)
+    void resize(size_t newSize, T clearValue)
     {
-        mCurrentVector.resize(newSize);
-        mNextVector.resize(newSize);
+        mCurrentVector.resize(newSize, clearValue);
+        mNextVector.resize(newSize, clearValue);
     }
     
 };
