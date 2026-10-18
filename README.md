@@ -1,14 +1,15 @@
 ## Boid Simulation
 
-A small project implementing boid simulation using [Raylib](https://www.raylib.com/)
+A small project implementing boid simulation and pathfinding using [Raylib](https://www.raylib.com/).
 Boids are capable of separation, alignment and grouping.
 
 There is also a flow field algorithm. I use **inverse dijkstra** that create a cost grid and transforming it into
-a flow field using a **Sobel Filter** that the boid can follow. I will be integrated into boids later.
+a flow field using a **Sobel Filter** that the boid can follow. You can choose a new destination using left click.
 
 For the boids i implemented some optimizations such as a Data Oriented Programming, grid partitioning and
-multithreading.
-I also added an option to display density at boid and grid level;
+**multithreadind**. **Multithreading** become interesting with high boid count, number vary on hardware.
+I also added an option to display **density** at boid and grid level.
+When used with a terrain boid avoids walls and follow a generated flow field.
 
 ### Parameters :
 - You can find weight for boid behavior in ``` BoidSim/BoidManager.h ``` alongside some other parameters
@@ -18,7 +19,7 @@ I also added an option to display density at boid and grid level;
 
 ### Further Upgrades
 It is possible to optimize boids by switching to a **kdTree** instead of the grid or improving grid checking to test
-neighbors from cells in front of the boid.
+neighbors from cells in front of the boid. It is also possible to force SIMD instruction for boids.
 It is also possible to imply randomness or learning in each boids weights.
 
 ---
@@ -38,9 +39,7 @@ Dijkstra time is measured using ``` breeze_1024.png ``` and ``` breeze_2048.png 
 Averaging 100 iterations over random destinations. Every test is in release build.
 Optimizations are cumulative.
 
-
 | Dijkstra Optimizations                     | 1024x1024 | 2048x2048 |
 |--------------------------------------------|-----------|-----------|
 | Baseline (naive using priority_queue)      | 19.0ms    | 81.6ms    |
 | Flattened 2D array (for cost grid and map) | 16.9ms    | 75.8ms    |
-| Small changes                              | 16.4ms    | 74.5ms    |
