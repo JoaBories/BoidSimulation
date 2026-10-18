@@ -16,12 +16,12 @@ void BoidGrid::resize(const Vec2I& gridSize)
 	mCellSize = screenBounds / gridSize.to<float>();
 	
 	mGridSize = gridSize;
-	mGrid.resize(gridSize);
+	mGrid.resize(gridSize, {});
 }
 
 void BoidGrid::updateGrid(const std::vector<Vec2F>& boidPositions)
 {
-	mGrid.clear();
+	mGrid.clear({});
 	mMaxDensity = 0;
 
 	for (uint32_t i = 0; i < boidPositions.size(); i++)

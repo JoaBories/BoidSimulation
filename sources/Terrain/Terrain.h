@@ -34,8 +34,15 @@ public:
 	
 	void newDestination(const Vec2I& destination);
 	
+	Vec2I getGridFromPos(const Vec2F& pos) const; 
+	
 	[[nodiscard]] bool isWalkable(const Vec2I& pos, uint8_t threshold = 128) const;
+	[[nodiscard]] bool isWalkable(int x, int y, uint8_t threshold = 128) const;
 	[[nodiscard]] bool isWalkable(const uint64_t& it, uint8_t threshold = 128) const;
+	
+	[[nodiscard]] Vec2F getDirection(const Vec2I& pos) const;
+	[[nodiscard]] Vec2F getDirection(int x, int y) const;
+	[[nodiscard]] Vec2F getDirection(const uint64_t& it) const;
 
 	[[nodiscard]] Vec2I getSize() const { return mMap.getSize(); }
 	

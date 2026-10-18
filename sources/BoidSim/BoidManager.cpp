@@ -123,31 +123,73 @@ void BoidManager::applyRules(const size_t index)
     mDensity.writeNext(index, density);
 }
 
+void BoidManager::resolveTerrain(const size_t index)
+{
+    const Vec2I gridPos = mTerrain->getGridFromPos(mPos.readCurrent(index));
+    
+    Vec2F wallAvoid = Vec2F::Zero;
+    float ttWeight = 0.0f;
+    
+    for (int x = -WALL_SEARCH_LENGTH; x <= WALL_SEARCH_LENGTH; x++)
+    {			
+        for (int y = -WALL_SEARCH_LENGTH; y <= WALL_SEARCH_LENGTH; y++)
+        {
+            if (!mTerrain->isWalkable(gridPos.x + x, gridPos.y + y))
+            {
+                float weight = 1.0f / (float)(x*x + y*y); // used to give less weight to further walls
+                ttWeight += weight;
+                wallAvoid += Vec2F((float)-x, (float)-y) * weight;
+            }
+        }
+    }
+    
+    Vec2F addedVelocity = Vec2F::Zero;
+    
+    if (wallAvoid != Vec2F::Zero) addedVelocity += wallAvoid * WALL_WEIGHT;
+    addedVelocity += mTerrain->getDirection(gridPos) * FLOW_FIELD_WEIGHT;
+    
+    mVel.writeNext(index, mVel.readNext(index) + addedVelocity * TERRAIN_WEIGHT);
+}
+
 void BoidManager::updateBoids()
 {
     if (mBoidNumber == 0) return;
     
-    std::vector<std::thread> workers;
-    const size_t chunkSize = (mBoidNumber + mThreadNumber - 1) / mThreadNumber;
-    
-    for (size_t thread = 0; thread < mThreadNumber; thread++)
+    if constexpr (USE_MULTITHREADING)
     {
-        const size_t begin = thread * chunkSize;
-        const size_t end = Math::min(begin + chunkSize, mBoidNumber);
-        if (begin >= end) break;
-        
-        workers.emplace_back([&, begin, end]
+        std::vector<std::thread> workers;
+        const size_t chunkSize = (mBoidNumber + mThreadNumber - 1) / mThreadNumber;
+    
+        for (size_t thread = 0; thread < mThreadNumber; thread++)
         {
-            for (size_t i = begin; i < end; i++)
+            const size_t begin = thread * chunkSize;
+            const size_t end = Math::min(begin + chunkSize, mBoidNumber);
+            if (begin >= end) break;
+        
+            workers.emplace_back([&, begin, end]
             {
-                applyRules(i); // write all vel and density
-                resolveMovement(i); // write all vel and pos
-                checkScreenBounds(i); // update vel and pos
-            }
-        });
+                for (size_t i = begin; i < end; i++)
+                {
+                    applyRules(i); // write all vel and density
+                    if (mTerrain) resolveTerrain(i); // write all vel
+                    resolveMovement(i); // write all vel and pos
+                    checkScreenBounds(i); // update vel and pos
+                }
+            });
+        }
+        for (auto& w : workers) w.join();   // sync point
+        workers.clear();
     }
-    for (auto& w : workers) w.join();   // sync point
-    workers.clear();
+    else
+    {
+        for (size_t i = 0; i < mBoidNumber; i++)
+        {
+            applyRules(i); // write all vel and density
+            if (mTerrain) resolveTerrain(i); // write all vel
+            resolveMovement(i); // write all vel and pos
+            checkScreenBounds(i); // update vel and pos
+        }
+    }
 
     mPos.swap();
     mVel.swap();     
@@ -157,7 +199,7 @@ void BoidManager::updateBoids()
     for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.readCurrent(index), mMaxDensity);
 }
 
-void BoidManager::drawDebug(size_t boidIndex) const
+void BoidManager::drawDebug(const size_t boidIndex) const
 {
     DrawLineEx(mPos.readCurrent(boidIndex).toRaylib(), (mPos.readCurrent(boidIndex) + mVel.readCurrent(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
 
@@ -203,9 +245,9 @@ BoidManager::BoidManager(const size_t agentNumber) :
     const int stepY = (int)std::ceil(HIGHER_RANGE / mGrid.getCellSize().y / 2.0f);
     mCellStep = Vec2I(stepX, stepY);
     
-    mPos.resize(mBoidNumber);
-    mVel.resize(mBoidNumber);
-    mDensity.resize(mBoidNumber);
+    mPos.resize(mBoidNumber, Vec2F::Zero);
+    mVel.resize(mBoidNumber, Vec2F::Zero);
+    mDensity.resize(mBoidNumber, 0);
     
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
@@ -265,7 +307,7 @@ void BoidManager::draw() const
     {
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, RAYWHITE);
+            DrawCircleV(mPos.readCurrent(i).toRaylib(), 2.0f, BLUE);
         }
     }
     
