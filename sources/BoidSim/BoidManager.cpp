@@ -123,9 +123,32 @@ void BoidManager::applyRules(const size_t index)
     mDensity.writeNext(index, density);
 }
 
-void BoidManager::resolveTerrain(size_t index)
+void BoidManager::resolveTerrain(const size_t index)
 {
+    const Vec2I gridPos = mTerrain->getGridFromPos(mPos.readCurrent(index));
     
+    Vec2F wallAvoid = Vec2F::Zero;
+    float ttWeight = 0.0f;
+    
+    for (int x = -WALL_SEARCH_LENGTH; x <= WALL_SEARCH_LENGTH; x++)
+    {			
+        for (int y = -WALL_SEARCH_LENGTH; y <= WALL_SEARCH_LENGTH; y++)
+        {
+            if (!mTerrain->isWalkable(gridPos.x + x, gridPos.y + y))
+            {
+                float weight = 1.0f / (float)(x*x + y*y); // used to give less weight to further walls
+                ttWeight += weight;
+                wallAvoid += Vec2F((float)-x, (float)-y) * weight;
+            }
+        }
+    }
+    
+    Vec2F addedVelocity = Vec2F::Zero;
+    
+    if (wallAvoid != Vec2F::Zero) addedVelocity += wallAvoid * WALL_WEIGHT;
+    addedVelocity += mTerrain->getDirection(gridPos) * FLOW_FIELD_WEIGHT;
+    
+    mVel.writeNext(index, mVel.readNext(index) + addedVelocity * TERRAIN_WEIGHT);
 }
 
 void BoidManager::updateBoids()
@@ -176,7 +199,7 @@ void BoidManager::updateBoids()
     for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.readCurrent(index), mMaxDensity);
 }
 
-void BoidManager::drawDebug(size_t boidIndex) const
+void BoidManager::drawDebug(const size_t boidIndex) const
 {
     DrawLineEx(mPos.readCurrent(boidIndex).toRaylib(), (mPos.readCurrent(boidIndex) + mVel.readCurrent(boidIndex) * 1).toRaylib(), 1.0f, GREEN);
 
@@ -284,7 +307,7 @@ void BoidManager::draw() const
     {
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, RAYWHITE);
+            DrawCircleV(mPos.readCurrent(i).toRaylib(), 2.0f, BLUE);
         }
     }
     

@@ -13,16 +13,23 @@ struct BoidWeights
 };
 
 constexpr BoidWeights BOID_WEIGHTS = {2.0f, 0.9f, 0.6f};
+constexpr float TERRAIN_WEIGHT = 1.0f;
+constexpr float WALL_WEIGHT = 0.6f;
+constexpr float FLOW_FIELD_WEIGHT = 0.9f;
+
 constexpr float SEPARATE_RANGE = 30.0f;
 constexpr float ALIGN_RANGE = 50.0f;
 constexpr float GROUP_RANGE = 70.0f;
 constexpr float PERCEPTION_ANGLE = 120.0f;
+
 constexpr float MAX_SPEED = 50.0f;
+
+constexpr int WALL_SEARCH_LENGTH = 5; // in pixel on map
 
 constexpr bool DEBUG_PERF = false;
 constexpr bool DEBUG_DENSITY = false;
 
-constexpr bool USE_MULTITHREADING = false;
+constexpr bool USE_MULTITHREADING = true;
 
 constexpr float DOT_PRODUCT_THRESHOLD = -(PERCEPTION_ANGLE / 180.0f - 1.0f);
 constexpr float HIGHER_RANGE = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, GROUP_RANGE));

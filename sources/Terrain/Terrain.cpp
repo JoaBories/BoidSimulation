@@ -105,8 +105,8 @@ void Terrain::buildFlowField()
 				const int cost = mCostGrid[{ x, y }];
 				const int costDifference = cost - centerCost;
 				
-				gX += costDifference * distanceX * (distanceY == 0 ? 2 : 1);
-				gY += costDifference * distanceY * (distanceX == 0 ? 2 : 1);
+				gX += costDifference * -distanceX * (distanceY == 0 ? 2 : 1);
+				gY += costDifference * -distanceY * (distanceX == 0 ? 2 : 1);
 			}
 		}
 		
@@ -208,10 +208,40 @@ bool Terrain::isWalkable(const Vec2I& pos, const uint8_t threshold) const
 	return mMap[pos] > threshold;
 }
 
+bool Terrain::isWalkable(const int x, const int y, const uint8_t threshold) const
+{
+	if (x < 0 || x >= mMap.getSize().x) return false;
+	if (y < 0 || y >= mMap.getSize().y) return false;
+	
+	return mMap.at(x,y) > threshold;
+}
+
 bool Terrain::isWalkable(const uint64_t& it, const uint8_t threshold) const
 {
 	if (it < mMap.getItSize()) return mMap[it] > threshold;
 	return false;
+}
+
+Vec2F Terrain::getDirection(const Vec2I& pos) const
+{
+	if (pos.x < 0 || pos.x >= mFlowField.getSize().x) return Vec2F::Zero;
+	if (pos.y < 0 || pos.y >= mFlowField.getSize().y) return Vec2F::Zero;
+	
+	return mFlowField[pos];
+}
+
+Vec2F Terrain::getDirection(const int x, const int y) const
+{
+	if (x < 0 || x >= mFlowField.getSize().x) return Vec2F::Zero;
+	if (y < 0 || y >= mFlowField.getSize().y) return Vec2F::Zero;
+	
+	return mFlowField.at(x,y);
+}
+
+Vec2F Terrain::getDirection(const uint64_t& it) const
+{
+	if (it < mFlowField.getItSize()) return mFlowField[it];
+	return Vec2F::Zero;
 }
 
 void Terrain::update()

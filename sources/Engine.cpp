@@ -11,8 +11,9 @@ void Engine::init()
 	mAssetBank = AssetBank::GetInstance();
 	mAssetBank->Init();
 	
-	mBoidManager = new BoidManager(50);
+	mBoidManager = new BoidManager(200);
 	mTerrain = new Terrain("resources/test.png");
+	mBoidManager->setTerrain(mTerrain);
 }
 
 void Engine::close()
