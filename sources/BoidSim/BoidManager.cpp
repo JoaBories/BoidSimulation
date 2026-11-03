@@ -5,18 +5,16 @@
 #include <string>
 #include <thread>
 
-void BoidManager::resolveMovement(const size_t index)
+void BoidManager::integrate(const size_t index)
 {
     if (mVel.readNext(index).sqrLength() > MAX_SPEED * MAX_SPEED) mVel.writeNext(index, mVel.readNext(index).normalized() * MAX_SPEED);
+    else if (mVel.readNext(index).sqrLength() < MAX_SPEED * MAX_SPEED) mVel.writeNext(index, mVel.readNext(index).normalized() * MIN_SPEED);
     else mVel.writeNext(index, mVel.readNext(index));
     mPos.writeNext(index, mPos.readCurrent(index) + mVel.readNext(index) * GetFrameTime());
     
     // readNext so it can read the updated velocity form apply rules
     // no possible data concurrency because it only reads own boid infos
-}
-
-void BoidManager::checkScreenBounds(const size_t index)
-{
+    
     if (mPos.readNext(index).x < 0)
     {
         mPos.writeNext(index, { 0.0f , mPos.readNext(index).y } );
@@ -42,85 +40,82 @@ void BoidManager::checkScreenBounds(const size_t index)
 
 void BoidManager::applyRules(const size_t index)
 {
-    const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(index));
+    const Vec2F pos = mPos.readCurrent(index);
+    const Vec2F vel = mVel.readCurrent(index);
+    const Vec2I gridPos = mGrid.getGridPos(pos);
 
-    Vec2F separate { 0.0f, 0.0f };
+    Vec2F separateSum{};
+    Vec2F alignSum{};
+    Vec2F groupSum{};
 
-    Vec2F alignSum { 0.0f, 0.0f };
-    uint32_t alignCount = 0;
-
-    Vec2F groupSum { 0.0f, 0.0f };
-    uint32_t groupCount = 0;
+    int separateCount{0};
+    int alignCount{0};
+    int groupCount{0};
     
-    float density = 0.0f;
+    float density{0.0f};
+    
+    const int minX = std::max(0, gridPos.x - mCellStep.x);
+    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStep.x + 1);
+    
+    const int minY = std::max(0, gridPos.y - mCellStep.y);
+    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStep.y + 1);
 
-    for (int y = -mCellStep.y; y < mCellStep.y+1; y++)
+    for (int y = minY; y < maxY; y++)
     {
-        if (gridPos.y + y < 0 || gridPos.y + y >= mGrid.getGridSize().y) continue;
-
-        for (int x = -mCellStep.x; x < mCellStep.x+1; x++)
+        for (int x = minX; x < maxX; x++)
         {
-            if (gridPos.x + x < 0 || gridPos.x + x >= mGrid.getGridSize().x) continue;
-
-
-            for (const uint32_t j : mGrid.getNeighbors(gridPos + Vec2I(x,y)))
+            for (const uint32_t j : mGrid.getNeighbors(x,y))
             {
                 if (index == j) continue;
 
-                Vec2F distance = mPos.readCurrent(j) - mPos.readCurrent(index);
+                Vec2F distance = mPos.readCurrent(j) - pos;
                 const float distanceSquared = distance.dot(distance);
             
-                if (distanceSquared >= HIGHER_RANGE * HIGHER_RANGE) // Skip neighbors not in range
-                {
-                    continue;
-                }
+                if (distanceSquared >= GROUP_RANGE * GROUP_RANGE) continue; // Skip neighbors not in range
             
                 density += 1.0f;
             
-                if (distance.dot(mVel.readCurrent(index)) <= DOT_PRODUCT_THRESHOLD) // Skip neighbors not in view
-                {
-                    continue;
-                }
+                if (distance.dot(vel) <= DOT_PRODUCT_THRESHOLD || distanceSquared < 1e-6f) continue; // Skip neighbors not in view
 
                 if (distanceSquared <= SEPARATE_RANGE * SEPARATE_RANGE)
                 {
-                    separate += -distance / distanceSquared;
-                }
-
-                if (distanceSquared <= ALIGN_RANGE * ALIGN_RANGE)
-                {
-                    alignSum += mVel.readCurrent(j);
-                    alignCount++;
-                }
-
-                if (distanceSquared <= GROUP_RANGE * GROUP_RANGE)
-                {
-                    groupSum += mPos.readCurrent(j);
-                    groupCount++;
+                    separateSum += -(distance / distanceSquared);
+                    separateCount++;
+                    
+                    if (distanceSquared <= ALIGN_RANGE * ALIGN_RANGE)
+                    {
+                        alignSum += mVel.readCurrent(j);
+                        alignCount++;
+                        
+                        if (distanceSquared <= GROUP_RANGE * GROUP_RANGE)
+                        {
+                            groupSum += mPos.readCurrent(j);
+                            groupCount++;
+                        }
+                    }
                 }
             }
         }
     }
 
-    separate = separate.normalized();
-
-    Vec2F align { 0.0f, 0.0f };
-    if (alignCount)
+    Vec2F force{};
+    if (separateCount)
     {
-        alignSum /= static_cast<float>(alignCount);
-        align = alignSum.normalized() * MAX_SPEED;
+        force += separateSum / separateCount * BOID_WEIGHTS.separate;
+        
+        if (alignCount)
+        {
+            force += (alignSum / alignCount - vel) * BOID_WEIGHTS.align;
+            
+            if (groupCount)
+            {
+                force += (groupSum / groupCount - pos).normalized() * BOID_WEIGHTS.group;
+            }
+        }
     }
-
-    Vec2F group { 0.0f, 0.0f };
-    if (groupCount)
-    {
-        groupSum /= static_cast<float>(groupCount);
-        group = (groupSum - mPos.readCurrent(index)).normalized();
-    }
-
-    const Vec2F force = separate * BOID_WEIGHTS.separate + align * BOID_WEIGHTS.align + group * BOID_WEIGHTS.group;
-    mVel.writeNext(index, mVel.readCurrent(index) + force * GetFrameTime());
-    mDensity.writeNext(index, density);
+    
+    mVel.writeNext(index, vel + force * GetFrameTime());
+    mDensity[index] = density;
 }
 
 void BoidManager::resolveTerrain(const size_t index)
@@ -172,8 +167,7 @@ void BoidManager::updateBoids()
                 {
                     applyRules(i); // write all vel and density
                     if (mTerrain) resolveTerrain(i); // write all vel
-                    resolveMovement(i); // write all vel and pos
-                    checkScreenBounds(i); // update vel and pos
+                    integrate(i); // write all vel and pos
                 }
             });
         }
@@ -186,17 +180,15 @@ void BoidManager::updateBoids()
         {
             applyRules(i); // write all vel and density
             if (mTerrain) resolveTerrain(i); // write all vel
-            resolveMovement(i); // write all vel and pos
-            checkScreenBounds(i); // update vel and pos
+            integrate(i); // write all vel and pos
         }
     }
 
     mPos.swap();
-    mVel.swap();     
-    mDensity.swap();
+    mVel.swap();
     
     mMaxDensity = 0;
-    for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity.readCurrent(index), mMaxDensity);
+    for (size_t index = 0; index < mBoidNumber; index++) mMaxDensity = std::max(mDensity[index], mMaxDensity);
 }
 
 void BoidManager::drawDebug(const size_t boidIndex) const
@@ -212,16 +204,17 @@ void BoidManager::drawDebug(const size_t boidIndex) const
     
     const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(boidIndex));
 
-    for (int y = -mCellStep.y; y < mCellStep.y + 1; y++)
+    const int minX = std::max(0, gridPos.x - mCellStep.x);
+    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStep.x + 1);
+    
+    const int minY = std::max(0, gridPos.y - mCellStep.y);
+    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStep.y + 1);
+    
+    for (int y = minY; y < maxY; y++)
     {
-        if (gridPos.y + y < 0 || gridPos.y + y >= mGrid.getGridSize().y) continue;
-
-        for (int x = -mCellStep.x; x < mCellStep.x + 1; x++)
+        for (int x = minX; x < maxX; x++)
         {
-            if (gridPos.x + x < 0 || gridPos.x + x >= mGrid.getGridSize().x) continue;
-
-
-            for (const uint32_t j : mGrid.getNeighbors(gridPos + Vec2I(x, y)))
+            for (const uint32_t j : mGrid.getNeighbors(x,y))
             {
                 if (boidIndex == j) continue;
                 DrawCircleLines((int)mPos.readCurrent(j).x, (int)mPos.readCurrent(j).y, 20.0f, BLACK);
@@ -238,11 +231,11 @@ BoidManager::BoidManager(const size_t agentNumber) :
 {
     mThreadNumber = Math::max(std::thread::hardware_concurrency(), 1u);
     
-    const Vec2I gridSize = Vec2I::One + (mScreenBounds / HIGHER_RANGE).to<int>();
+    const Vec2I gridSize = Vec2I::One + (mScreenBounds / GROUP_RANGE).to<int>();
     mGrid.resize(gridSize);
     
-    const int stepX = (int)std::ceil(HIGHER_RANGE / mGrid.getCellSize().x / 2.0f);
-    const int stepY = (int)std::ceil(HIGHER_RANGE / mGrid.getCellSize().y / 2.0f);
+    const int stepX = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().x / 2.0f);
+    const int stepY = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().y / 2.0f);
     mCellStep = Vec2I(stepX, stepY);
     
     mPos.resize(mBoidNumber, Vec2F::Zero);
@@ -253,12 +246,10 @@ BoidManager::BoidManager(const size_t agentNumber) :
     {
         mPos.writeNext(i, { Math::randFloat(0, mScreenBounds.x), Math::randFloat(0, mScreenBounds.y) });
         mVel.writeNext(i, randVec2() * MAX_SPEED);
-        mDensity.writeNext(i, 0.0f);
     }
     
     mPos.copy();
     mVel.copy();
-    mDensity.copy();
     
     mGrid.updateGrid(mPos.readVector());
 }
@@ -299,7 +290,7 @@ void BoidManager::draw() const
     
         for (uint32_t i = 0; i < mBoidNumber; i++)
         {
-            const Color color = colorLerp(YELLOW, RED, mDensity.readCurrent(i) / mMaxDensity);
+            const Color color = colorLerp(YELLOW, RED, mDensity[i] / mMaxDensity);
             DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, color);
         }
     }

@@ -20,6 +20,7 @@ public:
 	void updateGrid(const std::vector<Vec2F>& boidPositions);
 
 	[[nodiscard]] const std::vector<int>& getNeighbors(const Vec2I& gridPosition) const;
+	[[nodiscard]] const std::vector<int>& getNeighbors(int x, int y) const;
 
 	[[nodiscard]] Vec2I getGridPos(const Vec2F& position) const;
 	[[nodiscard]] const Vec2F& getCellSize() const { return mCellSize; }

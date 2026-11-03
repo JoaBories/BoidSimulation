@@ -12,34 +12,34 @@ struct BoidWeights
     float group;
 };
 
-constexpr BoidWeights BOID_WEIGHTS = {2.0f, 0.9f, 0.6f};
+constexpr BoidWeights BOID_WEIGHTS = {2.0f, 0.5f, 0.6f};
 constexpr float TERRAIN_WEIGHT = 1.0f;
 constexpr float WALL_WEIGHT = 5.0f;
 constexpr float FLOW_FIELD_WEIGHT = 0.9f;
 
 constexpr float SEPARATE_RANGE = 30.0f;
-constexpr float ALIGN_RANGE = 50.0f;
-constexpr float GROUP_RANGE = 70.0f;
-constexpr float PERCEPTION_ANGLE = 120.0f;
+constexpr float ALIGN_RANGE = 45.0f;
+constexpr float GROUP_RANGE = 60.0f;
+constexpr float PERCEPTION_ANGLE = 360.0f;
 
-constexpr float MAX_SPEED = 50.0f;
+constexpr float MAX_SPEED = 20.0f;
+constexpr float MIN_SPEED = 15.0f;
 
 constexpr int WALL_SEARCH_LENGTH = 4; // in pixel on map
 
-constexpr bool DEBUG_PERF = false;
-constexpr bool DEBUG_DENSITY = false;
+constexpr bool DEBUG_PERF = true;
+constexpr bool DEBUG_DENSITY = true;
 
-constexpr bool USE_MULTITHREADING = false;
+constexpr bool USE_MULTITHREADING = true;
 
 constexpr float DOT_PRODUCT_THRESHOLD = -(PERCEPTION_ANGLE / 180.0f - 1.0f);
-constexpr float HIGHER_RANGE = Math::max(SEPARATE_RANGE, Math::max(ALIGN_RANGE, GROUP_RANGE));
 
 class BoidManager
 {
 private:
     DoubleBufferVector<Vec2F> mPos;
     DoubleBufferVector<Vec2F> mVel;
-    DoubleBufferVector<float> mDensity;
+    std::vector<float> mDensity;
     size_t mBoidNumber;
 
     BoidGrid mGrid;
@@ -56,8 +56,7 @@ private:
     
     Terrain* mTerrain;
     
-    void resolveMovement(size_t index);
-    void checkScreenBounds(size_t index);
+    void integrate(size_t index);
     void applyRules(size_t index);
     void resolveTerrain(size_t index);
     void updateBoids();

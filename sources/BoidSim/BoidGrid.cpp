@@ -39,6 +39,11 @@ const std::vector<int>& BoidGrid::getNeighbors(const Vec2I& gridPosition) const
 	return mGrid[gridPosition];
 }
 
+const std::vector<int>& BoidGrid::getNeighbors(const int x, const int y) const
+{
+	return mGrid.at(x,y);
+}
+
 Vec2I BoidGrid::getGridPos(const Vec2F& position) const
 {
 	const Vec2F gridSize = getCellSize();
