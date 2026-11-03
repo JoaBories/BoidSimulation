@@ -26,7 +26,7 @@ constexpr float PERCEPTION_ANGLE = 360.0f;
 constexpr float MAX_SPEED = 20.0f;
 constexpr float MIN_SPEED = 15.0f;
 
-constexpr float BOID_SIZE = 2.0f;
+constexpr float BOID_SIZE = 3.0f;
 
 constexpr int WALL_SEARCH_LENGTH = 4; // in pixel on map
 

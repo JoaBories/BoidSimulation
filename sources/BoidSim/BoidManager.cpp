@@ -5,6 +5,16 @@
 #include <string>
 #include <thread>
 
+Vec2F wrap(const Vec2F& pos, const Vec2F& bounds)
+{
+    Vec2F newPos = pos;
+    if (pos.x < 0) newPos.x += bounds.x;
+    else if (pos.x > bounds.x) newPos.x -= bounds.x;
+    if (pos.y < 0) newPos.y += bounds.y;
+    else if (pos.y > bounds.y) newPos.y -= bounds.y;
+    return newPos;
+}
+
 void BoidManager::integrate(const size_t index)
 {
     if (mVel.readNext(index).sqrLength() > MAX_SPEED * MAX_SPEED) mVel.writeNext(index, mVel.readNext(index).normalized() * MAX_SPEED);
@@ -15,27 +25,7 @@ void BoidManager::integrate(const size_t index)
     // readNext so it can read the updated velocity form apply rules
     // no possible data concurrency because it only reads own boid infos
     
-    if (mPos.readNext(index).x < 0)
-    {
-        mPos.writeNext(index, { 0.0f , mPos.readNext(index).y } );
-        mVel.writeNext(index, mVel.readNext(index) * Vec2F(-1.0f, 1.0f) );
-    }
-    else if (mPos.readNext(index).x > mScreenBounds.x)
-    {
-        mPos.writeNext(index, { mScreenBounds.x , mPos.readNext(index).y } );
-        mVel.writeNext(index, mVel.readNext(index) * Vec2F(-1.0f, 1.0f));
-    }
-    
-    if (mPos.readNext(index).y < 0)
-    {
-        mPos.writeNext(index, { mPos.readNext(index).x, 0.0f } );
-        mVel.writeNext(index, mVel.readNext(index) * Vec2F(1.0f, -1.0f));
-    }
-    else if (mPos.readNext(index).y > mScreenBounds.y)
-    {
-        mPos.writeNext(index, { mPos.readNext(index).x, mScreenBounds.y } );
-        mVel.writeNext(index, mVel.readNext(index) * Vec2F(1.0f, -1.0f));
-    }
+    mPos.writeNext(index, wrap(mPos.readNext(index), mScreenBounds));
 }
 
 void BoidManager::applyRules(const size_t index)
@@ -54,17 +44,18 @@ void BoidManager::applyRules(const size_t index)
     
     float density{0.0f};
     
-    const int minX = std::max(0, gridPos.x - mCellStepX);
-    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStepX + 1);
-    
-    const int minY = std::max(0, gridPos.y - mCellStepY);
-    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStepY + 1);
+    const int maxGridX = mGrid.getGridSize().x;
+    const int maxGridY = mGrid.getGridSize().y;
 
-    for (int y = minY; y < maxY; y++)
+    for (int y = -mCellStepY; y <= mCellStepY; y++)
     {
-        for (int x = minX; x < maxX; x++)
+        int cellY = ((gridPos.y + y) % maxGridY + maxGridY) % maxGridY;
+        
+        for (int x = -mCellStepX; x <= mCellStepX; x++)
         {
-            for (const uint32_t j : mGrid.getNeighbors(x,y))
+            int cellX = ((gridPos.x + x) % maxGridX + maxGridX) % maxGridX;
+            
+            for (const uint32_t j : mGrid.getNeighbors(cellX, cellY))
             {
                 if (index == j) continue;
 
@@ -203,20 +194,22 @@ void BoidManager::drawDebug(const size_t boidIndex) const
     DrawCircleSectorLines(mPos.readCurrent(boidIndex).toRaylib(), SEPARATE_RANGE, perceptionEdgeR, perceptionEdgeL, 10, RED);
     
     const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(boidIndex));
-
-    const int minX = std::max(0, gridPos.x - mCellStepX);
-    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStepX + 1);
-    const int minY = std::max(0, gridPos.y - mCellStepY);
-    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStepY + 1);
     
-    for (int y = minY; y < maxY; y++)
+    const int maxGridX = mGrid.getGridSize().x;
+    const int maxGridY = mGrid.getGridSize().y;
+
+    for (int y = -mCellStepY; y <= mCellStepY; y++)
     {
-        for (int x = minX; x < maxX; x++)
+        const int cellY = ((gridPos.y + y) % maxGridY + maxGridY) % maxGridY;
+        
+        for (int x = -mCellStepX; x <= mCellStepX; x++)
         {
-            for (const uint32_t j : mGrid.getNeighbors(x,y))
+            const int cellX = ((gridPos.x + x) % maxGridX + maxGridX) % maxGridX;
+            
+            for (const uint32_t j : mGrid.getNeighbors(cellX, cellY))
             {
                 if (boidIndex == j) continue;
-                DrawCircleLines((int)mPos.readCurrent(j).x, (int)mPos.readCurrent(j).y, 20.0f, BLACK);
+                DrawCircleLines((int)mPos.readCurrent(j).x, (int)mPos.readCurrent(j).y, 20.0f, RAYWHITE);
             }
         }
     }
@@ -292,12 +285,14 @@ void BoidManager::draw() const
     
     if constexpr (DEBUG_DENSITY) mGrid.draw();
     
+    const size_t lastDensity = mDensityPalette.size() - 1;
+    const float densityScale = mMaxDensity > 0.0f ? (float)lastDensity / mMaxDensity : 0.0f;
     for (uint32_t i = 0; i < mBoidNumber; i++)
     {
         Color color;
         if constexpr (DEBUG_DENSITY)
         {
-            const int densityColor = (int)((float)mDensity[i]/(float)mMaxDensity * (float)mDensityPalette.size());
+            const size_t densityColor = std::min((size_t)(mDensity[i]* densityScale), lastDensity);
             color = mDensityPalette[densityColor];
         }
         else
@@ -305,18 +300,18 @@ void BoidManager::draw() const
             color = BLUE;
         }
         
-        const Vec2F p = mPos.readCurrent(i);
-        Vec2F d = mVel.readCurrent(i).normalized();
-        const Vec2F n(-d.y, d.x); // perpendicular
+        const Vec2F pos = mPos.readCurrent(i);
+        Vec2F dir = mVel.readCurrent(i).normalized();
+        const Vec2F perpendicular{-dir.y, dir.x};
 
-        const Vec2F tip   = p + d * BOID_SIZE;
-        const Vec2F left  = p - d * (BOID_SIZE * 0.5f) + n * (BOID_SIZE * 0.5f);
-        const Vec2F right = p - d * (BOID_SIZE * 0.5f) - n * (BOID_SIZE * 0.5f);
+        const Vec2F tip   = pos + dir*BOID_SIZE;
+        const Vec2F left  = pos - dir*(BOID_SIZE * 0.5f) + perpendicular*(BOID_SIZE * 0.5f);
+        const Vec2F right = pos - dir*(BOID_SIZE * 0.5f) - perpendicular*(BOID_SIZE * 0.5f);
 
         DrawTriangle(right.toRaylib(), left.toRaylib(), tip.toRaylib(), color);
     }
     
-    //drawDebug(0); //Uncomment to debug one boid.
+    drawDebug(0); //Uncomment to debug one boid.
 
     if constexpr (DEBUG_PERF)
     {
