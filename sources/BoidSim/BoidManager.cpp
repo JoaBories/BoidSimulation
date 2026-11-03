@@ -54,11 +54,11 @@ void BoidManager::applyRules(const size_t index)
     
     float density{0.0f};
     
-    const int minX = std::max(0, gridPos.x - mCellStep.x);
-    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStep.x + 1);
+    const int minX = std::max(0, gridPos.x - mCellStepX);
+    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStepX + 1);
     
-    const int minY = std::max(0, gridPos.y - mCellStep.y);
-    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStep.y + 1);
+    const int minY = std::max(0, gridPos.y - mCellStepY);
+    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStepY + 1);
 
     for (int y = minY; y < maxY; y++)
     {
@@ -204,11 +204,10 @@ void BoidManager::drawDebug(const size_t boidIndex) const
     
     const Vec2I gridPos = mGrid.getGridPos(mPos.readCurrent(boidIndex));
 
-    const int minX = std::max(0, gridPos.x - mCellStep.x);
-    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStep.x + 1);
-    
-    const int minY = std::max(0, gridPos.y - mCellStep.y);
-    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStep.y + 1);
+    const int minX = std::max(0, gridPos.x - mCellStepX);
+    const int maxX = std::min(mGrid.getGridSize().x, gridPos.x + mCellStepX + 1);
+    const int minY = std::max(0, gridPos.y - mCellStepY);
+    const int maxY = std::min(mGrid.getGridSize().y, gridPos.y + mCellStepY + 1);
     
     for (int y = minY; y < maxY; y++)
     {
@@ -229,14 +228,13 @@ BoidManager::BoidManager(const size_t agentNumber) :
     mTotalUpdateTime(0), mUpdateCount(0), mLogTime(0.0f),
     mMaxDensity(0.0f)
 {
-    mThreadNumber = Math::max(std::thread::hardware_concurrency(), 1u);
+    mThreadNumber = Math::max(std::thread::hardware_concurrency(), 1u) * 2;
     
     const Vec2I gridSize = Vec2I::One + (mScreenBounds / GROUP_RANGE).to<int>();
     mGrid.resize(gridSize);
     
-    const int stepX = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().x / 2.0f);
-    const int stepY = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().y / 2.0f);
-    mCellStep = Vec2I(stepX, stepY);
+    mCellStepX = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().x / 2.0f);
+    mCellStepY = (int)std::ceil(GROUP_RANGE / mGrid.getCellSize().y / 2.0f);
     
     mPos.resize(mBoidNumber, Vec2F::Zero);
     mVel.resize(mBoidNumber, Vec2F::Zero);
@@ -252,6 +250,14 @@ BoidManager::BoidManager(const size_t agentNumber) :
     mVel.copy();
     
     mGrid.updateGrid(mPos.readVector());
+    
+    if (DEBUG_DENSITY)
+    {
+        for (uint32_t i = 0; i < mDensityPalette.size(); i++)
+        {
+            mDensityPalette[i] = colorLerp(RAYWHITE, RED, (float)i/(float)mDensityPalette.size());
+        }
+    }
 }
 
 void BoidManager::update()
@@ -284,22 +290,30 @@ void BoidManager::draw() const
 {
     if (mBoidNumber == 0) return;
     
-    if constexpr (DEBUG_DENSITY)
-    {
-        mGrid.draw();
+    if constexpr (DEBUG_DENSITY) mGrid.draw();
     
-        for (uint32_t i = 0; i < mBoidNumber; i++)
-        {
-            const Color color = colorLerp(YELLOW, RED, mDensity[i] / mMaxDensity);
-            DrawCircleV(mPos.readCurrent(i).toRaylib(), 1.0f, color);
-        }
-    }
-    else
+    for (uint32_t i = 0; i < mBoidNumber; i++)
     {
-        for (uint32_t i = 0; i < mBoidNumber; i++)
+        Color color;
+        if constexpr (DEBUG_DENSITY)
         {
-            DrawCircleV(mPos.readCurrent(i).toRaylib(), 2.0f, BLUE);
+            const int densityColor = (int)((float)mDensity[i]/(float)mMaxDensity * (float)mDensityPalette.size());
+            color = mDensityPalette[densityColor];
         }
+        else
+        {
+            color = BLUE;
+        }
+        
+        const Vec2F p = mPos.readCurrent(i);
+        Vec2F d = mVel.readCurrent(i).normalized();
+        const Vec2F n(-d.y, d.x); // perpendicular
+
+        const Vec2F tip   = p + d * BOID_SIZE;
+        const Vec2F left  = p - d * (BOID_SIZE * 0.5f) + n * (BOID_SIZE * 0.5f);
+        const Vec2F right = p - d * (BOID_SIZE * 0.5f) - n * (BOID_SIZE * 0.5f);
+
+        DrawTriangle(right.toRaylib(), left.toRaylib(), tip.toRaylib(), color);
     }
     
     //drawDebug(0); //Uncomment to debug one boid.

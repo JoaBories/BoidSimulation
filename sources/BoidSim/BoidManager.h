@@ -4,6 +4,7 @@
 #include "DoubleBufferVector.h"
 #include "BoidSim/BoidGrid.h"
 #include "Terrain/Terrain.h"
+#include <array>
 
 struct BoidWeights
 {
@@ -12,7 +13,7 @@ struct BoidWeights
     float group;
 };
 
-constexpr BoidWeights BOID_WEIGHTS = {2.0f, 0.5f, 0.6f};
+constexpr BoidWeights BOID_WEIGHTS = {25.0f, 0.5f, 0.6f};
 constexpr float TERRAIN_WEIGHT = 1.0f;
 constexpr float WALL_WEIGHT = 5.0f;
 constexpr float FLOW_FIELD_WEIGHT = 0.9f;
@@ -24,6 +25,8 @@ constexpr float PERCEPTION_ANGLE = 360.0f;
 
 constexpr float MAX_SPEED = 20.0f;
 constexpr float MIN_SPEED = 15.0f;
+
+constexpr float BOID_SIZE = 2.0f;
 
 constexpr int WALL_SEARCH_LENGTH = 4; // in pixel on map
 
@@ -40,12 +43,17 @@ private:
     DoubleBufferVector<Vec2F> mPos;
     DoubleBufferVector<Vec2F> mVel;
     std::vector<float> mDensity;
-    size_t mBoidNumber;
+    
+    std::array<Color, 32> mDensityPalette;
+    
+    uint64_t mBoidNumber;
 
     BoidGrid mGrid;
-    size_t mThreadNumber;
+    int mThreadNumber;
     
-    Vec2I mCellStep;
+    int mCellStepX;
+    int mCellStepY;
+    
     Vec2F mScreenBounds;
     
     uint64_t mTotalUpdateTime;
