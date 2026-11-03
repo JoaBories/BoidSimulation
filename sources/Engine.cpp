@@ -3,7 +3,7 @@
 
 void Engine::init()
 {
-	SetConfigFlags(FLAG_WINDOW_UNDECORATED);
+	SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_MSAA_4X_HINT);
 	InitWindow(1920, 1080, "Boid Simulation");
 	
 	SetTargetFPS(60);
